@@ -1,0 +1,29 @@
+*.zip
+*.tar.gz
+*.log
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+
+
+
+# ide begin
+.idea
+/venv/
+# ide end
+
+
+# sublime begin
+sftp-config.json
+# sublime end
+
+/tmp/
+/log/
+*.bak
+*.conf

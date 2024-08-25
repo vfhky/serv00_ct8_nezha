@@ -1,0 +1,25 @@
+########################################## 系统常量配置 ##########################################
+# 心跳的时候是否要监控域名并发送通知. 0-否 1-是
+CHECK_MONITOR_URL_DNS=0
+# 监控域名访问成功时的通知时间小时点。如果不填写则默认24小时都通知。每个小时只通知一次。
+OK_NOTIFY_HOURS=0, 8, 9, 10, 12, 14, 18, 19, 20, 21, 22, 23
+# 定时心跳任务脚本时间, */5 * * * *
+HEAT_BEAT_CRON_TABLE_TIME=*/5 * * * *
+# 要监控的域名
+MONITOR_URL=https://monitor.typecodes.com
+# 企业微信机器人
+ENABLE_QYWX_NOTIFY=1
+QYWX_ROBOT_KEY=xxxxxx
+# telegram
+ENABLE_TG_NOTIFY=1
+TG_ROBOT_KEY=xxxxxx
+TG_CHAT_ID=xxxxxx
+# PushPlus
+ENABLE_PUSHPLUS_NOTIFY=1
+PUSHPLUS_KEY=xxxxxx
+# 企业微信app推送
+ENABLE_QYWX_APP_NOTIFY=0
+QYWX_APP_CROP_ID=xxxxxx
+QYWX_APP_SECRET=xxxxxx
+QYWX_APP_AGENT_ID=xxxxxx
+QYWX_APP_NOTIFY_USER=@all

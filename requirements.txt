@@ -1,0 +1,4 @@
+paramiko==3.4.1
+python-telegram-bot==21.4
+pytz==2024.1
+Requests==2.32.3

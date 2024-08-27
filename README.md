@@ -9,7 +9,7 @@ serv00和ct8主机一键安装哪吒探针和多主机保活
 
 ```
 1、支持分别安装最新版本的哪吒dashboard和agent客户端，且安装时基本一路点确认即可，无需复杂操作；
-2、弃用PM2，使用脚本进行进程启动，尽量避免被serv00或者ct8杀掉；
+2、弃用PM2，使用脚本进行进程监控，尽量避免被serv00或者ct8杀掉；
 3、自动生成crontab，实现进程监控和主机保活；
 4、对于多个主机，可以实现相互保活；
 5、多个主机之间的通信，使用ssh公私钥，无需暴露主机密码；
@@ -38,7 +38,7 @@ serv00和ct8主机一键安装哪吒探针和多主机保活
 `host.eg`模板文件是填写需要保活的主机信息。例如当前要保活另外一个s9的serv00机器(用户名是vhub)，那么填写：
 
 ```
-s9.serv00.com|22|vhub
+s9.serv00.com|22|vhub|password
 ```
 
 #### 3.2 系统常量模板 sys.eg
@@ -63,4 +63,4 @@ s9.serv00.com|22|vhub
 
 ## 4 其它详细说明
 
-更多说明或者操作过程可以参考 [blog](https://typecodes.com/python/serv00ct8nezha.html) 。
+详细操作过程，进程监控，保活原理以及青龙面板的使用等等，请参考[serv00和ct8主机一键安装哪吒探针和多主机保活](https://typecodes.com/python/serv00ct8nezha.html) 系列文章。

@@ -364,10 +364,16 @@ gen_agent_run_sh() {
     prompt_input "===> Agent面板： 请输入域名或者ip: " "" nz_proxy_domain
     prompt_input "===> 面板的GRPCPort通信端口: " "" nz_proxy_port
     prompt_input "===> 面板的设置agent密钥，也可以后期再修改: " "password1234" nz_password
+    prompt_input "===> 启用针对 gRPC 端口的 SSL/TLS加密，无特殊情况请选择N-否: " "N" nz_tls
 
     user_tmpdir="${NZ_AGENT_PATH}/tmp"
     if [ ! -d "${user_tmpdir}" ]; then
         mkdir -p "${user_tmpdir}"
+    fi
+
+    tls_flag=""
+    if echo "$nz_tls" | grep -qiw 'Y'; then
+        tls_flag="--tls"
     fi
 
     cat <<EOF > "${agent_run_sh}"
@@ -378,6 +384,7 @@ export TMPDIR=${user_tmpdir}
 nohup ${NZ_AGENT_PATH}/nezha-agent \\
     -s ${nz_proxy_domain}:${nz_proxy_port} \\
     -p ${nz_password} \\
+    $tls_flag \\
     -d > /dev/null 2>&1 &
 EOF
 

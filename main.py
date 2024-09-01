@@ -71,7 +71,7 @@ def main():
 
     # 生成配置文件
     if not utils.run_shell_script_with_os(utils_sh_file, 'rename_config', utils.get_serv00_config_dir(serv00_ct8_dir)):
-        print(f"===> 从[config]目录生成配置文件失败，请检查....")
+        print(f"===> 从[config]目录生成配置文件失败，请检查serv00是否开启允许应用....")
         sys.exit(1)
 
     print(f"===> 从[config]目录生成配置文件成功....")

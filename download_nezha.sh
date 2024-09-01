@@ -254,7 +254,7 @@ download_dashboard() {
         && unzip -qq "${tmp_dir}"/app.zip -d "${tmp_dir}" \
         && cd "${compire_dir}" \
         && go build -ldflags="-s -w --extldflags '-static -fpic' -X github.com/naiba/nezha/service/singleton.Version=${version_num}" \
-        && \cp -r "${source_dir}/resource" "${NZ_DASHBOARD_PATH}" \
+        && \cp -rf "${source_dir}/resource" "${NZ_DASHBOARD_PATH}" \
         && rm "${NZ_DASHBOARD_PATH}/resource/resource.go" \
         && \mv -f "${compire_dir}/dashboard" "${NZ_DASHBOARD_PATH}"/nezha-dashboard
     \rm -rf "${tmp_dir}"
@@ -391,7 +391,45 @@ EOF
     chmod +x "${agent_run_sh}"
 }
 
+modify_config() {
+    NZ_APP_PATH=$1
 
+    prompt_input "===> 是否修改dashboard配置: " "N" modify
+    if [[ "${modify}" =~ ^[Yy]$ ]]; then
+        NZ_DASHBOARD_CONFIG_FILE="${NZ_APP_PATH}/dashboard/data/config.yaml"
+        if [[ ! -f "${NZ_DASHBOARD_CONFIG_FILE}" ]]; then
+            echo "dashboard的配置文件[${NZ_DASHBOARD_CONFIG_FILE}]不存在，请检查是否已经安装过了dashboard"
+            exit 1
+        fi
+
+        echo "====> 准备开始修改dashboard配置文件[${NZ_DASHBOARD_CONFIG_FILE}]"
+        modify_dashboard_config
+
+        dashboard_pid=$(pgrep -f nezha-dashboard)
+        if [[ -n "$dashboard_pid" ]]; then
+            kill -9 "$dashboard_pid"
+            echo "====> 关闭哪吒dashboard进程成功"
+        fi
+    fi
+
+    prompt_input "===> 是否修改agent配置: " "N" modify
+    if [[ "${modify}" =~ ^[Yy]$ ]]; then
+        agent_run_sh="${NZ_APP_PATH}/agent/nezha-agent.sh"
+        if [[ ! -f "${agent_run_sh}" ]]; then
+            echo "agent的配置文件[${agent_run_sh}]不存在，请检查是否已经安装过了agent"
+            exit 1
+        fi
+
+        echo "====> 准备开始修改agent配置文件[${NZ_DASHBOARD_CONFIG_FILE}]"
+        gen_agent_run_sh
+
+        agent_pid=$(pgrep -f nezha-agent)
+        if [[ -n "$agent_pid" ]]; then
+            kill -9 "$agent_pid"
+            echo "====> 关闭哪吒agent进程成功"
+        fi
+    fi
+}
 
 
 if [ "$#" -lt 2 ]; then
@@ -400,6 +438,7 @@ if [ "$#" -lt 2 ]; then
     echo "Commands:"
     echo "  dashboard  app 下载 dashboard"
     echo "  agent       下载 agent"
+    echo "  config      修改dashboard或者agent的配置"
     exit 1
 fi
 
@@ -413,15 +452,15 @@ case "$command" in
     "agent")
         download_agent "$arg"
         ;;
-    "serv00_ct8")
-        script "$arg"
+    "config")
+        modify_config
         ;;
     *)
         echo "Error: Invalid command '$command'"
         echo "====== Usage ======"
         echo "  $0 dashboard <arg>   下载 dashboard"
         echo "  $0 agent <arg>       下载 agent"
-        echo "  $0 script <arg>      下载 script"
+        echo "  $0 config <arg>      修改dashboard或者agent的配置"
         exit 1
         ;;
 esac

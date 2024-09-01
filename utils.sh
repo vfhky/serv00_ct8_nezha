@@ -111,6 +111,23 @@ rename_config_files() {
     done
 }
 
+modify_config() {
+    user_name=$(whoami)
+    nz_app_path="/home/${user_name}/nezha_app"
+    script_dir=$(dirname "$(readlink -f "$0")")
+    download_nezha_sh="${script_dir}/download_nezha.sh"
+    heart_beat_entry_sh="${script_dir}/heart_beat_entry.sh"
+
+    # 执行下载配置脚本
+    "${download_nezha_sh}" config "${nz_app_path}"
+    if [[ $? -ne 0 ]]; then
+        echo "Error: 执行 ${download_nezha_sh} 失败."
+    fi
+
+    # 启动进程
+    "${heart_beat_entry_sh}"
+}
+
 user_pkill() {
     user_name=$(whoami)
     echo "==> 停止用户 ${user_name} 所有应用"
@@ -263,6 +280,9 @@ case "$1" in
     "rename_config")
         shift 1
         rename_config_files "$@"
+    "modify_config")
+        shift 1
+        modify_config "$@"
         ;;
     "telegram")
         shift 1
@@ -284,7 +304,8 @@ case "$1" in
         echo "$0 heart - 写入心跳监控配置, 参数: 配置文件的完整路径  serv00_ct8_host  serv00_ct8_port  serv00_ct8_username"
         echo "$0 cron - 添加定时任务, 参数: '定时时间' '脚本路径' [脚本参数...]"
         echo "$0 check - [1-增加本机监控 0-关闭本机监控] 配置文件的完整路径"
-        echo "$0 rename_config - 配置文件的完整路径"
+        echo "$0 rename_config - 从配置模板文件中生成具体配置文件"
+        echo "$0 modify_config - 修改哪吒dashboard或者agent的配置并重启服务"
         echo "$0 telegram - 发送telegram通知 chat_id token msg"
         echo "$0 pushplus - 发送pushplus通知 token title msg"
         echo "$0 restore - 重装系统"

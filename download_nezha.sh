@@ -361,7 +361,7 @@ download_agent() {
 gen_agent_run_sh() {
     agent_run_sh="${NZ_AGENT_PATH}/nezha-agent.sh"
 
-    prompt_input "===> Agent面板： 请输入域名或者ip: " "" nz_proxy_domain
+    prompt_input "===> 请输入面板的域名: " "" nz_proxy_domain
     prompt_input "===> 面板的GRPCPort通信端口: " "" nz_proxy_port
     prompt_input "===> 面板的设置agent密钥，也可以后期再修改: " "password1234" nz_password
     prompt_input "===> 启用针对 gRPC 端口的 SSL/TLS加密，无特殊情况请选择N-否: " "N" nz_tls
@@ -392,11 +392,14 @@ EOF
 }
 
 modify_config() {
+    echo "====> 开始准备修改，已知哪吒安装目录为[$1]"
+    pre_check
     NZ_APP_PATH=$1
 
     prompt_input "===> 是否修改dashboard配置: " "N" modify
     if [[ "${modify}" =~ ^[Yy]$ ]]; then
-        NZ_DASHBOARD_CONFIG_FILE="${NZ_APP_PATH}/dashboard/data/config.yaml"
+        NZ_DASHBOARD_PATH="${NZ_APP_PATH}/dashboard"
+        NZ_DASHBOARD_CONFIG_FILE="${NZ_DASHBOARD_PATH}/data/config.yaml"
         if [[ ! -f "${NZ_DASHBOARD_CONFIG_FILE}" ]]; then
             echo "dashboard的配置文件[${NZ_DASHBOARD_CONFIG_FILE}]不存在，请检查是否已经安装过了dashboard"
             exit 1
@@ -414,7 +417,8 @@ modify_config() {
 
     prompt_input "===> 是否修改agent配置: " "N" modify
     if [[ "${modify}" =~ ^[Yy]$ ]]; then
-        agent_run_sh="${NZ_APP_PATH}/agent/nezha-agent.sh"
+        NZ_AGENT_PATH="${NZ_APP_PATH}/agent"
+        agent_run_sh="${NZ_AGENT_PATH}/nezha-agent.sh"
         if [[ ! -f "${agent_run_sh}" ]]; then
             echo "agent的配置文件[${agent_run_sh}]不存在，请检查是否已经安装过了agent"
             exit 1
@@ -453,7 +457,7 @@ case "$command" in
         download_agent "$arg"
         ;;
     "config")
-        modify_config
+        modify_config "$arg"
         ;;
     *)
         echo "Error: Invalid command '$command'"

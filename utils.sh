@@ -136,6 +136,13 @@ user_pkill() {
 }
 
 restore() {
+    echo "确定要重装系统吗？会删除整个用户目录的文件。确定重装请输入Y/y"
+    read -r input_value
+    if [[ "${input_value}" != "Y" && "${input_value}" != "y" ]]; then
+        echo "操作已取消。"
+        exit 1
+    fi
+
     user_pkill
 
     script_dir=$(dirname "$(readlink -f "$0")")

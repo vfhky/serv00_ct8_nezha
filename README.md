@@ -63,4 +63,14 @@ s9.serv00.com|22|vhub|password
 
 ## 4 其它详细说明
 
-详细操作过程，进程监控，保活原理以及青龙面板的使用等等，请参考[serv00和ct8主机一键安装哪吒探针和多主机保活](https://typecodes.com/python/serv00ct8nezha.html) 系列文章。
+详细操作过程，进程监控，保活原理以及青龙面板的使用等等，请参考`serv00和ct8主机一键安装哪吒探针和多主机保活`系列文章：
+
+1、常规手工安装方式： 包括如何server00开启应用、开启端口、申请github的token等等，[《在serv00主机上安装哪吒探针》](https://typecodes.com/linux/server00installnezha.html)
+
+2、使用项目脚本进行安装： [《serv00和ct8主机一键安装哪吒探针和多主机保活》](https://typecodes.com/python/serv00ct8nezha.html)
+
+3、项目的架构说明： [《serv00和ct8主机一键安装哪吒探针和多主机保活(二)》](https://typecodes.com/python/serv00ct8nezha2.html)
+
+4、演示青龙面板保活： [《serv00和ct8主机一键安装哪吒探针和多主机保活(三)》](https://typecodes.com/python/serv00ct8nezha3.html)
+
+5、utils.sh工具类使用教程： [《serv00和ct8主机一键安装哪吒探针和多主机保活(四)》](https://typecodes.com/python/serv00ct8nezha4.html)

@@ -280,6 +280,7 @@ case "$1" in
     "rename_config")
         shift 1
         rename_config_files "$@"
+        ;;
     "modify_config")
         shift 1
         modify_config "$@"

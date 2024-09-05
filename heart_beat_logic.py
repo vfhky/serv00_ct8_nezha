@@ -12,6 +12,7 @@ from sys_config_entry import SysConfigEntry
 from logger_wrapper import LoggerWrapper
 import utils
 from notify_entry import NotifyEntry
+from backup_entry import BackupEntry
 
 
 # 常量定义

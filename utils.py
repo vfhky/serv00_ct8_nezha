@@ -47,6 +47,10 @@ def get_app_dir(user_name):
 def get_dashboard_dir(user_name):
     return os.path.join(get_app_dir(user_name), 'dashboard')
 
+def get_dashboard_db_file(user_name):
+    dashboard_dir = get_dashboard_dir(user_name)
+    return os.path.join(dashboard_dir, 'data/sqlite.db')
+
 def get_agent_dir(user_name):
     return os.path.join(get_app_dir(user_name), 'agent')
 

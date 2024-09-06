@@ -1,7 +1,6 @@
 import os
-import requests
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Optional
 from logger_wrapper import LoggerWrapper
 from sys_config_entry import SysConfigEntry
 from qiniu import Auth, put_file
@@ -9,6 +8,8 @@ import qiniu.config
 
 class QiniuBack:
     _instance = None
+    DATE_FORMAT = '%d_%H_%M'
+    MONTH_FORMAT = '%Y%m'
 
     def __new__(cls, sys_config_entry: SysConfigEntry):
         if cls._instance is None:
@@ -26,14 +27,14 @@ class QiniuBack:
         self.secret_key = self.sys_config_entry.get("QINIU_SECRET_KEY")
         self.bucket_name = self.sys_config_entry.get("QINIU_BUCKET_NAME")
         self.dir_name = self.sys_config_entry.get("QINIU_DIR_NAME")
-        self.ttl = int(self.sys_config_entry.get("QINIU_EXPIRE_HOUR", 1)) * 3600
+        self.ttl = int(self.sys_config_entry.get("QINIU_EXPIRE_DAYS", 7)) * 24 * 3600
         self.auth = Auth(self.access_key, self.secret_key)
 
-    def backup_bashboard_db(self, db_file: str):
+    def backup_bashboard_db(self, db_file: str) -> Optional[str]:
         try:
             now = datetime.now()
-            date_prefix = now.strftime('%d_%H_%M')
-            month_dir = now.strftime('%Y%m')
+            date_prefix = now.strftime(self.DATE_FORMAT)
+            month_dir = now.strftime(self.MONTH_FORMAT)
             
             file_name = os.path.basename(db_file)
             new_file_name = f"{date_prefix}_{file_name}"

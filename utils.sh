@@ -108,12 +108,18 @@ rename_config_files() {
                 \cp -f "$file" "$new_file"
             else
                 local temp_file=$(mktemp)
-                grep -Fxv -f "$new_file" "$file" > "$temp_file"
-                if [ -s "$temp_file" ]; then
-                    cat "$temp_file" >> "$new_file"
-                fi
+                local keys_file=$(mktemp)
+
+                awk -F= '{print $1}' "$new_file" > "$keys_file"
+                while IFS= read -r line; do
+                    key=$(echo "$line" | awk -F= '{print $1}')
+                    
+                    if ! grep -q "^$key=" "$keys_file"; then
+                        echo "$line" >> "$new_file"
+                    fi
+                done < "$file"
                 
-                rm -f "$temp_file"
+                rm -f "$temp_file" "$keys_file"
             fi
         fi
     done

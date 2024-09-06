@@ -106,6 +106,14 @@ rename_config_files() {
             
             if [ ! -e "$new_file" ]; then
                 \cp -f "$file" "$new_file"
+            else
+                local temp_file=$(mktemp)
+                grep -Fxv -f "$new_file" "$file" > "$temp_file"
+                if [ -s "$temp_file" ]; then
+                    cat "$temp_file" >> "$new_file"
+                fi
+                
+                rm -f "$temp_file"
             fi
         fi
     done

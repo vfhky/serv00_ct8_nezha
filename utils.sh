@@ -94,7 +94,7 @@ gen_ed25519() {
 
 rename_config_files() {
     local dir="$1"
-    
+
     if [ ! -d "$dir" ]; then
         echo "目录 $dir 不存在"
         return 1
@@ -103,24 +103,35 @@ rename_config_files() {
     for file in "$dir"/*.eg; do
         if [ -e "$file" ]; then
             local new_file="${file%.eg}.conf"
-            
-            if [ ! -e "$new_file" ]; then
-                \cp -f "$file" "$new_file"
-            else
-                local temp_file=$(mktemp)
-                local keys_file=$(mktemp)
 
-                awk -F= '{print $1}' "$new_file" > "$keys_file"
-                while IFS= read -r line; do
-                    key=$(echo "$line" | awk -F= '{print $1}')
-                    
-                    if ! grep -q "^$key=" "$keys_file"; then
+            if [ -e "$new_file" ]; then
+                local backup_file="${new_file}.$(date +%Y_%m_%d_%H_%M)"
+                \cp -f "$new_file" "$backup_file"
+            else
+                \cp -f "$file" "$new_file"
+                continue
+            fi
+
+            local keys_file="./keys_file_temp.txt"
+            touch "$keys_file"
+
+            awk -F= '!/^#/ {print $1}' "$new_file" > "$keys_file"
+
+            while IFS= read -r line; do
+                if [[ "$line" =~ ^# ]]; then
+                    if ! grep -Fxq "$line" "$new_file"; then
                         echo "$line" >> "$new_file"
                     fi
-                done < "$file"
-                
-                rm -f "$temp_file" "$keys_file"
-            fi
+                else
+                    key=$(echo "$line" | awk -F= '{print $1}')
+                    
+                    if ! grep -q "^${key}" "$keys_file"; then
+                        echo "$line" >> "$new_file"
+                    fi
+                fi
+            done < "$file"
+
+            rm -f "$keys_file"
         fi
     done
 }

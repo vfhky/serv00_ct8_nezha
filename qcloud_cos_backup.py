@@ -8,7 +8,7 @@ from qcloud_cos.cos_exception import CosServiceError, CosClientError
 
 class QCloudCosBackup:
     _instance = None
-    DATE_FORMAT = '%d_%H_%M'
+    DATE_FORMAT = '%d_%H'
     MONTH_FORMAT = '%Y%m'
 
     def __new__(cls, sys_config_entry: SysConfigEntry):

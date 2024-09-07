@@ -24,8 +24,8 @@ class BackupEntry:
         self.qcloud_cos_backup = QCloudCosBackup(self.sys_config_entry) if self.sys_config_entry.get("ENABLE_QCLOUD_COS_BACKUP") == "1" else None
         self.ali_oss_backup = AliOssBackup(self.sys_config_entry) if self.sys_config_entry.get("ENABLE_ALI_OSS_BACKUP") == "1" else None
 
-    def backup_dashboard_db(self, db_file: str, e: Exception):
-        self._backup_dashboard_db("backup_dashboard_db", db_file=db_file, e=e)
+    def backup_dashboard_db(self, db_file: str):
+        self._backup_dashboard_db("backup_dashboard_db", db_file=db_file)
 
     def _backup_dashboard_db(self, method_name: str, **kwargs):
         if self.qiniu_backup:

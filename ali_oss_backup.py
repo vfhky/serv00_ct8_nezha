@@ -54,7 +54,7 @@ class AliOssBackup:
             expiration=oss2.models.LifecycleExpiration(days=self.ttl)
         )
         try:
-            result = self.bucket.put_bucket_lifecycle([rule1])
+            result = self.bucket.put_bucket_lifecycle([rule])
             self.logger.info(f"====> 设置阿里云oss {self.bucket_name} 的生命周期成功 result={result}")
         except Exception as e:
             self.logger.error(f"====> 设置阿里云oss {self.bucket_name} 的生命周期失败: {str(e)}")

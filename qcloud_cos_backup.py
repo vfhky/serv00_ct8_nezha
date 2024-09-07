@@ -37,6 +37,7 @@ class QCloudCosBackup:
     def _ensure_bucket_exists(self):
         try:
             self.client.head_bucket(Bucket=self.bucket_name)
+            self.logger.info(f"腾讯云cos Bucket 已存在: {self.bucket_name}")
         except CosServiceError as e:
             if e.get_status_code() == 404:
                 try:
@@ -58,15 +59,18 @@ class QCloudCosBackup:
                 'Expiration': {'Days': self.ttl}
             }
             
+            lifecycle_config = {
+                'Rule': [rule]
+            }
+            
             response = self.client.put_bucket_lifecycle(
                 Bucket=self.bucket_name,
-                LifecycleConfiguration={
-                    'Rules': [rule]
-                }
+                LifecycleConfiguration=lifecycle_config
             )
             self.logger.info(f"腾讯云cos成功设置存储桶 {self.bucket_name} 的生命周期规则")
         except (CosServiceError, CosClientError) as e:
             self.logger.error(f"腾讯云cos设置存储桶 {self.bucket_name} 的生命周期规则失败：{str(e)}")
+            raise
 
     def backup_dashboard_db(self, db_file: str) -> Optional[str]:
         key = None

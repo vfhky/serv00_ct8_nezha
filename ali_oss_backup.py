@@ -48,14 +48,13 @@ class AliOssBackup:
 
     def _set_lifecycle_rule(self):
         rule = oss2.models.LifecycleRule(
-            rule_id='delete_expired_files',
+            id='delete_expired_files',
             prefix=self.dir_name,
             status='Enabled',
             expiration=oss2.models.LifecycleExpiration(days=self.ttl)
         )
         try:
-            lifecycle = BucketLifecycle([rule1])
-            result = self.bucket.put_bucket_lifecycle(lifecycle)
+            result = self.bucket.put_bucket_lifecycle([rule1])
             self.logger.info(f"====> 设置阿里云oss {self.bucket_name} 的生命周期成功 result={result}")
         except Exception as e:
             self.logger.error(f"====> 设置阿里云oss {self.bucket_name} 的生命周期失败: {str(e)}")

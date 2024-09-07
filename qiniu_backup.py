@@ -34,7 +34,7 @@ class QiniuBackup:
 
     def _ensure_bucket_exists(self):
         try:
-            buckets, _ = self.bucket_manager.list_bucket()
+            buckets, _ = self.bucket_manager.list_bucket(self.region)
             if self.bucket_name not in buckets:
                 ret, info = self.bucket_manager.create_bucket(self.bucket_name, self.region)
                 if info.status_code == 200:

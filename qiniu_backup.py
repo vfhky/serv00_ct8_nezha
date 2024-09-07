@@ -6,7 +6,7 @@ from sys_config_entry import SysConfigEntry
 from qiniu import Auth, put_file
 import qiniu.config
 
-class QiniuBack:
+class QiniuBackup:
     _instance = None
     DATE_FORMAT = '%d_%H_%M'
     MONTH_FORMAT = '%Y%m'
@@ -30,7 +30,7 @@ class QiniuBack:
         self.ttl = int(self.sys_config_entry.get("QINIU_EXPIRE_DAYS", 7)) * 24 * 3600
         self.auth = Auth(self.access_key, self.secret_key)
 
-    def backup_bashboard_db(self, db_file: str) -> Optional[str]:
+    def backup_dashboard_db(self, db_file: str) -> Optional[str]:
         try:
             now = datetime.now()
             date_prefix = now.strftime(self.DATE_FORMAT)

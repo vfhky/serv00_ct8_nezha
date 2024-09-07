@@ -49,10 +49,31 @@ class QCloudCosBackup:
                 self.logger.error(f"腾讯云cos检查 Bucket 时出错: {self.bucket_name}, 错误: {str(e)}")
                 raise
 
+    def set_bucket_lifecycle(self):
+        try:
+            rule = {
+                'ID': 'DeleteAfterDays',
+                'Status': 'Enabled',
+                'Filter': {'Prefix': self.dir_name},
+                'Expiration': {'Days': self.ttl}
+            }
+            
+            response = self.client.put_bucket_lifecycle(
+                Bucket=self.bucket_name,
+                LifecycleConfiguration={
+                    'Rules': [rule]
+                }
+            )
+            self.logger.info(f"腾讯云cos成功设置存储桶 {self.bucket_name} 的生命周期规则")
+        except (CosServiceError, CosClientError) as e:
+            self.logger.error(f"腾讯云cos设置存储桶 {self.bucket_name} 的生命周期规则失败：{str(e)}")
+
     def backup_dashboard_db(self, db_file: str) -> Optional[str]:
         key = None
         try:
             self._ensure_bucket_exists()
+            self.set_bucket_lifecycle()
+            
             now = datetime.now()
             date_prefix = now.strftime(self.DATE_FORMAT)
             month_dir = now.strftime(self.MONTH_FORMAT)
@@ -61,15 +82,12 @@ class QCloudCosBackup:
             new_file_name = f"{date_prefix}_{file_name}"
             key = f"{self.dir_name}/{month_dir}/{new_file_name}"
            
-            expiration_time = (now + timedelta(days=self.ttl)).strftime('%Y-%m-%dT%H:%M:%SZ')
-            
             with open(db_file, 'rb') as fp:
                 response = self.client.put_object(
                     Bucket=self.bucket_name,
                     Body=fp,
                     Key=key,
                     EnableMD5=True,
-                    Expires=expiration_time,
                     StorageClass='STANDARD'
                 )
             

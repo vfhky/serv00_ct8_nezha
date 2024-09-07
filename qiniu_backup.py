@@ -29,7 +29,7 @@ class QiniuBackup:
         self.region = self.sys_config_entry.get("QINIU_REGION")
         self.bucket_name = self.sys_config_entry.get("QINIU_BUCKET_NAME")
         self.dir_name = self.sys_config_entry.get("QINIU_DIR_NAME")
-        self.ttl = str(self.sys_config_entry.get("QINIU_EXPIRE_DAYS", 30))
+        self.ttl = str(self.sys_config_entry.get("QINIU_EXPIRE_DAYS", 7))
         self.auth = Auth(self.access_key, self.secret_key)
         self.bucket_manager = BucketManager(self.auth)
 

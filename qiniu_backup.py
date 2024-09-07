@@ -36,7 +36,7 @@ class QiniuBackup:
         try:
             buckets, _ = self.bucket_manager.list_bucket(self.region)
             if self.bucket_name not in buckets:
-                ret, info = self.bucket_manager.mkbucketv2(self.bucket_name, self.region)
+                ret, info = self.bucket_manager.mkbucketv3(self.bucket_name, self.region)
                 if info.status_code == 200:
                     self.logger.info(f"====> 七牛成功创建 bucket: {self.bucket_name}")
                 else:

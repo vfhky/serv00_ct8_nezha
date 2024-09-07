@@ -96,14 +96,11 @@ class QCloudCosBackup:
                 )
             
             if 'ETag' in response:
-                self.logger.info(f"====> 上传到腾讯云cos成功 bucket_name={self.bucket_name} {key}")
+                self.logger.info(f"====> 腾讯云cos: [{db_file}] 上传成功 bucket_name={self.bucket_name} {key}")
                 return f"{self.bucket_name}/{key}"
             else:
-                self.logger.error(f"====> 上传到腾讯云cos失败 bucket_name={self.bucket_name} {key}")
+                self.logger.error(f"====> 腾讯云cos: [{db_file}] 上传失败 bucket_name={self.bucket_name} {key} 详情: {response}")
                 return None
-        except (CosServiceError, CosClientError) as e:
-            self.logger.error(f"====> 上传到腾讯云cos失败 bucket_name={self.bucket_name} {key} 错误：{str(e)}")
-            return None
         except Exception as e:
-            self.logger.error(f"====> 上传到腾讯云cos失败 bucket_name={self.bucket_name} {key} 未知错误：{str(e)}")
+            self.logger.error(f"====> 腾讯云cos: [{db_file}] 上传失败 bucket_name={self.bucket_name} {key} 错误：{str(e)}")
             return None

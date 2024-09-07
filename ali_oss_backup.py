@@ -74,11 +74,11 @@ class AliOssBackup:
                 result = self.bucket.put_object(key, file_obj)
             
             if result.status == 200:
-                self.logger.info(f"====> 上传到阿里云成功 bucket_name={self.bucket_name} {key}")
+                self.logger.info(f"====> 阿里oss: [{db_file}] 上传成功 bucket_name={self.bucket_name} {key}")
                 return f"{self.bucket_name}/{key}"
             else:
-                self.logger.error(f"====> 上传到阿里云失败 bucket_name={self.bucket_name} {key} 状态码: {result.status}")
+                self.logger.error(f"====> 阿里oss: [{db_file}] 上传失败 bucket_name={self.bucket_name} {key} 详情: {result}")
                 return None
         except Exception as e:
-            self.logger.error(f"====> 上传到阿里云失败 bucket_name={self.bucket_name} {key} 错误：{str(e)}")
+            self.logger.error(f"====> 阿里oss: [{db_file}] 上传失败 bucket_name={self.bucket_name} {key} 错误：{str(e)}")
             return None

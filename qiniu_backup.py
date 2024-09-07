@@ -98,14 +98,14 @@ class QiniuBackup:
             
             ret, info = put_file(token, upload_path, db_file)
             if info.status_code == 200:
-                self.logger.info(f"====> 上传到七牛成功 bucket_name={self.bucket_name} {upload_path}")
+                self.logger.info(f"====> 七牛: [{db_file}] 上传成功 bucket_name={self.bucket_name} {upload_path}")
                 
                 self._set_file_expiry(upload_path)
                 
                 return f"{self.bucket_name}/{upload_path}"
             else:
-                self.logger.error(f"====> 上传到七牛失败 bucket_name={self.bucket_name} {upload_path} 错误信息: {info}")
+                self.logger.error(f"====> 七牛: [{db_file}] 上传失败 bucket_name={self.bucket_name} {upload_path} 详情: {info}")
                 return None
         except Exception as e:
-            self.logger.error(f"====> 上传到七牛失败 bucket_name={self.bucket_name} {upload_path} 错误：{str(e)}")
+            self.logger.error(f"====> 七牛: [{db_file}] 上传失败 bucket_name={self.bucket_name} {upload_path} 错误：{str(e)}")
             return None

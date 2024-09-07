@@ -1,7 +1,7 @@
+cos_python_sdk_v5==1.9.31
 oss2==2.19.0
 paramiko==3.4.1
 python-telegram-bot==21.5
 pytz==2024.1
-qcloud-python-sdk>=5.1.0
 qiniu==7.13.2
 Requests==2.32.3

@@ -10,11 +10,12 @@ class QiniuBackup:
     _instance = None
     DATE_FORMAT = '%d_%H_%M'
     MONTH_FORMAT = '%Y%m'
-
+    PRIVATE = "1"
+    PUBLIC = "0"
+    
     def __new__(cls, sys_config_entry: SysConfigEntry):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._initialized = False
         return cls._instance
 
     def __init__(self, sys_config_entry: SysConfigEntry):
@@ -35,21 +36,42 @@ class QiniuBackup:
     def _ensure_bucket_exists(self):
         try:
             buckets, _ = self.bucket_manager.list_bucket(self.region)
-            if self.bucket_name not in buckets:
-                ret, info = self.bucket_manager.mkbucketv3(self.bucket_name, self.region)
-                if info.status_code == 200:
-                    self.logger.info(f"====> 七牛成功创建 bucket: {self.bucket_name}")
-                else:
-                    self.logger.error(f"====> 七牛创建 bucket 失败: {self.bucket_name}, 错误信息: {info}")
-            else:
-                self.logger.info(f"====> 七牛Bucket 已存在: {self.bucket_name}")
+            if not buckets or self.bucket_name not in buckets:
+                self._create_bucket()
         except Exception as e:
-            self.logger.error(f"====> 七牛检查或创建 bucket 时出错: {str(e)}")
+            self.logger.error(f"====> 七牛检查或创建 bucket: {self.bucket_name} 时出错: {str(e)}")
+            raise
+
+    def _create_bucket(self):
+        try:
+            ret, info = self.bucket_manager.mkbucketv3(self.bucket_name, self.region)
+            if info.status_code == 200:
+                self.logger.info(f"====> 七牛成功创建 Bucket: {self.bucket_name}")
+                self._change_bucket_permission(self.PRIVATE)
+            else:
+                self.logger.error(f"====> 七牛创建 Bucket 失败: {self.bucket_name}, 错误信息: {info}")
+                raise Exception(f"创建 bucket 失败: {info}")
+        except Exception as e:
+            self.logger.error(f"====> 七牛创建 bucket: {self.bucket_name} 时出错: {str(e)}")
+            raise
+
+    def _change_bucket_permission(self, private: str):
+        try:
+            if private not in (self.PRIVATE, self.PUBLIC):
+                raise ValueError("无效的权限参数")
+            private_desc = "私有" if private == self.PRIVATE else "公有"
+            ret, info = self.bucket_manager.change_bucket_permission(self.bucket_name, private)
+            if info.status_code == 200:
+                self.logger.info(f"====> 七牛设置 Bucket: {self.bucket_name} {private_desc} 属性成功")
+            else:
+                self.logger.error(f"====> 七牛设置 Bucket: {self.bucket_name} {private_desc} 属性失败, 错误信息: {info}")
+        except Exception as e:
+            self.logger.error(f"====> 七牛设置 bucket: {self.bucket_name} {private_desc} 属性时出错: {str(e)}")
+            raise
 
     def backup_dashboard_db(self, db_file: str) -> Optional[str]:
         try:
             self._ensure_bucket_exists()
-
             now = datetime.now()
             date_prefix = now.strftime(self.DATE_FORMAT)
             month_dir = now.strftime(self.MONTH_FORMAT)

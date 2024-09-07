@@ -37,11 +37,11 @@ class AliOssBackup:
     def _ensure_bucket_exists(self):
         try:
             self.bucket.get_bucket_info()
-            self.logger.info(f"Bucket {self.bucket_name} already exists")
+            self.logger.info(f"====> 阿里云oss bucket: {self.bucket_name} 已经存在")
         except oss2.exceptions.NoSuchBucket:
             try:
                 self.bucket.create_bucket()
-                self.logger.info(f"====> 阿里云oss创建bucket: {self.bucket_name} 成功 ")
+                self.logger.info(f"====> 阿里云oss创建bucket: {self.bucket_name} 成功")
             except Exception as e:
                 self.logger.error(f"====> 阿里云oss创建bucket: {self.bucket_name} 失败: {str(e)}")
                 raise
@@ -54,8 +54,9 @@ class AliOssBackup:
             expiration=oss2.models.LifecycleExpiration(days=self.ttl)
         )
         try:
-            result = self.bucket.put_bucket_lifecycle([rule])
-            self.logger.info(f"====> 设置阿里云oss {self.bucket_name} 的生命周期成功 result={result}")
+            lifecycle = oss2.models.BucketLifecycle([rule])
+            result = self.bucket.put_bucket_lifecycle(lifecycle)
+            self.logger.info(f"====> 设置阿里云oss {self.bucket_name} 的生命周期成功 result={result.status}")
         except Exception as e:
             self.logger.error(f"====> 设置阿里云oss {self.bucket_name} 的生命周期失败: {str(e)}")
 

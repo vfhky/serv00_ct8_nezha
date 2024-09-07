@@ -149,7 +149,7 @@ def main() -> None:
         if sys_config_entry.get('ENABLE_QINIU_BACKUP') == "1":
             backup_entry = BackupEntry(sys_config_entry)
             dashboard_db_file = utils.get_dashboard_db_file(user_name)
-            backup_entry.backup_bashboard_db(dashboard_db_file)
+            backup_entry.backup_dashboard_db(dashboard_db_file)
 
     except Exception as e:
         logger.error(f"心跳模块运行时出现未预期的错误: {str(e)}")

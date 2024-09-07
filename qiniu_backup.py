@@ -25,6 +25,7 @@ class QiniuBackup:
         self.logger = LoggerWrapper()
         self.access_key = self.sys_config_entry.get("QINIU_ACCESS_KEY")
         self.secret_key = self.sys_config_entry.get("QINIU_SECRET_KEY")
+        self.region = self.sys_config_entry.get("QINIU_REGION")
         self.bucket_name = self.sys_config_entry.get("QINIU_BUCKET_NAME")
         self.dir_name = self.sys_config_entry.get("QINIU_DIR_NAME")
         self.ttl = int(self.sys_config_entry.get("QINIU_EXPIRE_DAYS", 7)) * 24 * 3600
@@ -35,7 +36,7 @@ class QiniuBackup:
         try:
             buckets, _ = self.bucket_manager.list_bucket()
             if self.bucket_name not in buckets:
-                ret, info = self.bucket_manager.create_bucket(self.bucket_name, 'z0')
+                ret, info = self.bucket_manager.create_bucket(self.bucket_name, self.region)
                 if info.status_code == 200:
                     self.logger.info(f"====> 七牛成功创建 bucket: {self.bucket_name}")
                 else:

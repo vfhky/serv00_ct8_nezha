@@ -23,10 +23,11 @@ class QCloudCosBackup:
         self._initialized = True
         self.sys_config_entry = sys_config_entry
         self.logger = LoggerWrapper()
+        self.app_id = self.sys_config_entry.get("QCLOUD_COS_APP_ID")
         self.secret_id = self.sys_config_entry.get("QCLOUD_COS_SECRET_ID")
         self.secret_key = self.sys_config_entry.get("QCLOUD_COS_SECRET_KEY")
         self.region = self.sys_config_entry.get("QCLOUD_COS_REGION")
-        self.bucket_name = self.sys_config_entry.get("QCLOUD_COS_BUCKET_NAME")
+        self.bucket_name = f"{self.sys_config_entry.get('QCLOUD_COS_BUCKET_NAME')}-{self.app_id}"
         self.dir_name = self.sys_config_entry.get("QCLOUD_COS_DIR_NAME")
         self.ttl = int(self.sys_config_entry.get("QCLOUD_COS_EXPIRE_DAYS", 7))
         

@@ -74,3 +74,5 @@ s9.serv00.com|22|vhub|password
 4、演示青龙面板保活： [《serv00和ct8主机一键安装哪吒探针和多主机保活(三)》](https://typecodes.com/python/serv00ct8nezha3.html)
 
 5、utils.sh工具类使用教程： [《serv00和ct8主机一键安装哪吒探针和多主机保活(四)》](https://typecodes.com/python/serv00ct8nezha4.html)
+
+5、使用七牛、腾讯云cos、阿里云oss云存储备份哪吒面板数据库的使用教程： [《serv00和ct8主机一键安装哪吒探针和多主机保活(五)》](https://typecodes.com/python/serv00ct8nezha5.html)

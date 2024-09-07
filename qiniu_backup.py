@@ -36,8 +36,10 @@ class QiniuBackup:
     def _ensure_bucket_exists(self):
         try:
             buckets, _ = self.bucket_manager.list_bucket(self.region)
-            self.logger.info(f"====> 七牛 buckets: {buckets}")
-            if not buckets or self.bucket_name not in buckets:
+            if buckets is None:
+                buckets = []
+            bucket_ids = [bucket['id'] for bucket in buckets]
+            if not bucket_ids or self.bucket_name not in bucket_ids:
                 self._create_bucket()
             else:
                 self.logger.info(f"====> 七牛 Bucket 已存在: {self.bucket_name}")

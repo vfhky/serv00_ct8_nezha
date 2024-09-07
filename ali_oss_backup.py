@@ -27,10 +27,37 @@ class AliOssBackup:
         self.endpoint = self.sys_config_entry.get("ALI_OSS_ENDPOINT")
         self.bucket_name = self.sys_config_entry.get("ALI_OSS_BUCKET_NAME")
         self.dir_name = self.sys_config_entry.get("ALI_OSS_DIR_NAME")
-        self.ttl = int(self.sys_config_entry.get("ALI_OSS_EXPIRE_DAYS", 7)) * 24 * 3600
+        self.ttl = int(self.sys_config_entry.get("ALI_OSS_EXPIRE_DAYS", 7))
         
-        auth = oss2.Auth(self.access_key_id, self.access_key_secret)
-        self.bucket = oss2.Bucket(auth, self.endpoint, self.bucket_name)
+        self.auth = oss2.Auth(self.access_key_id, self.access_key_secret)
+        self.bucket = oss2.Bucket(self.auth, self.endpoint, self.bucket_name)
+        self._ensure_bucket_exists()
+        self._set_lifecycle_rule()
+
+    def _ensure_bucket_exists(self):
+        try:
+            self.bucket.get_bucket_info()
+            self.logger.info(f"Bucket {self.bucket_name} already exists")
+        except oss2.exceptions.NoSuchBucket:
+            try:
+                self.bucket.create_bucket()
+                self.logger.info(f"====> 阿里云oss创建bucket: {self.bucket_name} 成功 ")
+            except Exception as e:
+                self.logger.error(f"====> 阿里云oss创建bucket: {self.bucket_name} 失败: {str(e)}")
+                raise
+
+    def _set_lifecycle_rule(self):
+        rule = oss2.models.LifecycleRule(
+            rule_id='delete_expired_files',
+            prefix=self.dir_name,
+            status='Enabled',
+            expiration=oss2.models.LifecycleExpiration(days=self.ttl)
+        )
+        try:
+            self.bucket.put_bucket_lifecycle([rule])
+            self.logger.info(f"====> 设置阿里云oss {self.bucket_name} 的生命周期成功")
+        except Exception as e:
+            self.logger.error(f"====> 设置阿里云oss {self.bucket_name} 的生命周期失败: {str(e)}")
 
     def backup_dashboard_db(self, db_file: str) -> Optional[str]:
         try:

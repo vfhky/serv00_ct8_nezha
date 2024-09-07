@@ -47,7 +47,8 @@ QCLOUD_COS_EXPIRE_DAYS=30
 ENABLE_ALI_OSS_BACKUP=0
 ALI_OSS_ACCESS_KEY_ID=xxxxxx
 ALI_OSS_ACCESS_KEY_SECRET=xxxxxx
-ALI_OSS_ENDPOINT=xxxxxx
+# https://help.aliyun.com/zh/oss/user-guide/regions-and-endpoints
+ALI_OSS_ENDPOINT=oss-cn-guangzhou.aliyuncs.com
 ALI_OSS_BUCKET_NAME=serv00_ct_nezha
 ALI_OSS_DIR_NAME=serv00_ct_nezha
 ALI_OSS_EXPIRE_DAYS=30

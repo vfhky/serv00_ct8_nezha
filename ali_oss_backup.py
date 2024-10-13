@@ -7,7 +7,7 @@ import oss2
 
 class AliOssBackup:
     _instance = None
-    DATE_FORMAT = '%d_%H'
+    DATE_FORMAT = '%d'
     MONTH_FORMAT = '%Y%m'
 
     def __new__(cls, sys_config_entry: SysConfigEntry):

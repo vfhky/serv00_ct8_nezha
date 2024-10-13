@@ -8,7 +8,7 @@ import qiniu.config
 
 class QiniuBackup:
     _instance = None
-    DATE_FORMAT = '%d_%H'
+    DATE_FORMAT = '%d'
     MONTH_FORMAT = '%Y%m'
     PRIVATE = "1"
     PUBLIC = "0"

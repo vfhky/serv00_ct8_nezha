@@ -110,7 +110,7 @@ pre_check() {
         GITHUB_URL=$CUSTOM_MIRROR
     else
         if [ -z "$CN" ]; then
-            GITHUB_RAW_URL="raw.githubusercontent.com/naibahq/nezha/master"
+            GITHUB_RAW_URL="raw.githubusercontent.com/naiba/nezha/master"
             GITHUB_URL="github.com"
         else
             GITHUB_RAW_URL="gitee.com/naibahq/nezha/raw/master"
@@ -155,7 +155,7 @@ modify_dashboard_config() {
 
     wget -t 2 -T 60 -O "${config_file}" https://${GITHUB_RAW_URL}/script/config.yaml >/dev/null 2>&1
     if [ $? != 0 ]; then
-        err "下载脚本失败，请检查本机能否连接 ${GITHUB_RAW_URL}"
+        err "下载脚本失败，请检查本机能否连接 https://${GITHUB_RAW_URL}/script/config.yaml"
         return 0
     fi
 
@@ -255,7 +255,7 @@ download_dashboard() {
     fi
 
     version_file="${NZ_DASHBOARD_PATH}/version.txt"
-    unzip -qq "${NZ_DASHBOARD_PATH}"/app.zip -d "${NZ_DASHBOARD_PATH}" \
+    unzip -oqq "${NZ_DASHBOARD_PATH}"/app.zip -d "${NZ_DASHBOARD_PATH}" \
         && echo "v=${version_num}" > "${version_file}"
     \rm -rf "${NZ_DASHBOARD_PATH}"/app.zip
 

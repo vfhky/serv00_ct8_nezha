@@ -384,7 +384,7 @@ export TMPDIR=${user_tmpdir}
 nohup ${NZ_AGENT_PATH}/nezha-agent \\
     -s ${nz_proxy_domain}:${nz_proxy_port} \\
     -p ${nz_password} \\
-    $tls_flag \\
+    $( [ -n "${tls_flag}" ] && echo "${tls_flag}" ) \\
     -d > /dev/null 2>&1 &
 EOF
 

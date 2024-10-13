@@ -1,0 +1,9 @@
+#!/bin/bash
+
+export TMPDIR=
+
+nohup 2333/nezha-agent \
+    -s FF:3FFF \
+    -p 2233 \
+    \
+    -d > /dev/null 2>&1 &

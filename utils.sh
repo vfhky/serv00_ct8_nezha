@@ -282,6 +282,47 @@ update_check_cfg() {
     fi
 }
 
+kill_process() {
+    local process_name=$1
+    local pids=$(pgrep -f "${process_name}")
+    if [[ -n "$pids" ]]; then
+        echo "====> 正在关闭进程 [${process_name}]"
+        for pid in $pids; do
+            kill -15 "$pid" && sleep 2
+            if kill -0 "$pid" 2>/dev/null; then
+                kill -9 "$pid"
+            fi
+        done
+        echo "====> 关闭进程 [${process_name}] 成功"
+    else
+        echo "====> 进程 [${process_name}] 不存在"
+    fi
+}
+
+restart() {
+    local script_dir=$(dirname "$(readlink -f "$0")")
+    local heart_beat_entry_sh="${script_dir}/heart_beat_entry.sh"
+
+    echo "是否要重启 dashboard 面板？[Y/n]"
+    read -r input_value
+    if [[ "${input_value}" =~ ^[Yy]$ ]]; then
+        kill_process "nezha-dashboard"
+    fi
+
+    echo "是否要重启 agent 客户端？[Y/n]"
+    read -r input_value
+    if [[ "${input_value}" =~ ^[Yy]$ ]]; then
+        kill_process "nezha-agent"
+    fi
+
+    echo "正在重启服务..."
+    if [[ -x "${heart_beat_entry_sh}" ]]; then
+        "${heart_beat_entry_sh}"
+    else
+        echo "错误：${heart_beat_entry_sh} 不存在或不可执行"
+        exit 1
+    fi
+}
 
 case "$1" in
     "init")
@@ -328,6 +369,9 @@ case "$1" in
     "restore")
         restore
         ;;
+    "restart")
+        restart
+        ;;
     *)
         echo "====== 用法 ====="
         echo "$0 init - 优化使用环境"
@@ -342,6 +386,7 @@ case "$1" in
         echo "$0 telegram - 发送telegram通知 chat_id token msg"
         echo "$0 pushplus - 发送pushplus通知 token title msg"
         echo "$0 restore - 重装系统"
+        echo "$0 restart - 重启面板和agent"
         exit 1
         ;;
 esac

@@ -218,9 +218,6 @@ download_dashboard() {
     install_base
 
     NZ_DASHBOARD_PATH=$1
-    tmp_dir="$NZ_DASHBOARD_PATH/tmp"
-    rm -rf "$tmp_dir" >/dev/null 2>&1
-    mkdir -p "$tmp_dir"
 
     local version=$(curl -m 10 -sL "https://api.github.com/repos/naiba/nezha/releases/latest" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
     if [ ! -n "$version" ]; then

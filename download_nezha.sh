@@ -110,7 +110,7 @@ pre_check() {
         GITHUB_URL=$CUSTOM_MIRROR
     else
         if [ -z "$CN" ]; then
-            GITHUB_RAW_URL="raw.githubusercontent.com/vfhky/nezha/master"
+            GITHUB_RAW_URL="raw.githubusercontent.com/naibahq/nezha/master"
             GITHUB_URL="github.com"
         else
             GITHUB_RAW_URL="gitee.com/naibahq/nezha/raw/master"
@@ -234,32 +234,32 @@ download_dashboard() {
     fi
 
     if [ ! -n "$version" ]; then
-        err "获取版本号失败，请检查本机能否链接 https://api.github.com/repos/naiba/nezha/releases/latest"
+        err "获取版本号失败，请检查本机能否访问 https://api.github.com/repos/naiba/nezha/releases/latest"
         return 1
     else
         version_num=$(echo "$version" | sed 's/^v//')
         echo "当前最新版本为: v${version_num}"
     fi
 
-    if [ -z "$CN" ]; then
-        NZ_DASHBOARD_URL="https://${GITHUB_URL}/naiba/nezha/archive/refs/tags/$version.zip"
-    else
-        NZ_DASHBOARD_URL="https://${GITHUB_URL}/naibahq/nezha/archive/refs/tags/$version.zip"
+    NZ_DASHBOARD_URL="https://github.com/vfhky/nezha-build/releases/download/${version}/nezha-dashboard.zip"
+    #if [ -z "$CN" ]; then
+    #    NZ_DASHBOARD_URL="https://${GITHUB_URL}/naiba/nezha/archive/refs/tags/$version.zip"
+    #else
+    #    NZ_DASHBOARD_URL="https://${GITHUB_URL}/naibahq/nezha/archive/refs/tags/$version.zip"
+    #fi
+
+    wget -qO "${NZ_DASHBOARD_PATH}"/app.zip $NZ_DASHBOARD_URL >/dev/null 2>&1
+    if [ ! -f "${NZ_DASHBOARD_PATH}"/app.zip ]; then
+        echo "===> [dashboard] ${NZ_DASHBOARD_URL} 下载失败，请检查是否能正常访问"
+        exit 1
     fi
 
-    source_dir="${tmp_dir}/nezha-${version_num}"
-    compire_dir="${source_dir}/cmd/dashboard"
+    version_file="${NZ_DASHBOARD_PATH}/version.txt"
+    unzip -qq "${NZ_DASHBOARD_PATH}"/app.zip -d "${NZ_DASHBOARD_PATH}" \
+        && echo "v=${version_num}" > "${version_file}"
+    \rm -rf "${NZ_DASHBOARD_PATH}"/app.zip
 
-    wget -qO "${tmp_dir}"/app.zip $NZ_DASHBOARD_URL >/dev/null 2>&1 \
-        && unzip -qq "${tmp_dir}"/app.zip -d "${tmp_dir}" \
-        && cd "${compire_dir}" \
-        && go build -ldflags="-s -w --extldflags '-static -fpic' -X github.com/naiba/nezha/service/singleton.Version=${version_num}" \
-        && \cp -rf "${source_dir}/resource" "${NZ_DASHBOARD_PATH}" \
-        && rm "${NZ_DASHBOARD_PATH}/resource/resource.go" \
-        && \mv -f "${compire_dir}/dashboard" "${NZ_DASHBOARD_PATH}"/nezha-dashboard
-    \rm -rf "${tmp_dir}"
-
-    echo "===> dashboard ${NZ_DASHBOARD_URL} 下载完成"
+    echo "===> [dashboard] ${NZ_DASHBOARD_URL} 下载完成"
 
     modify_dashboard_config
 }

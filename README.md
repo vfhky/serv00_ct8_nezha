@@ -15,7 +15,8 @@ serv00和ct8主机一键安装哪吒探针和多主机保活
 5、多个主机之间的通信，使用ssh公私钥，无需暴露主机密码；
 6、支持 青龙面板 或者其它云主机对自己的serv00或者ct8主机进行进程监控和保活；
 7、支持自定义进程保活，例如自己写的任何一个服务，可以在monitor.conf配置文件中简单配置即可；
-8、支持企业微信机器人、企业微信app应用、tg、pushPlus等监控通知。
+8、支持企业微信机器人、企业微信app应用、tg、pushPlus等监控通知；
+9、支持七牛、腾讯云cos、阿里云oss云存储备份哪吒面板数据库。
 ```
 
 
@@ -47,7 +48,7 @@ s9.serv00.com|22|vhub|password
 
 #### 3.3 进程监控模板 monitor.eg
 
-用于进程监控：当进程不存在时（例如被serv00系统自动杀掉），会自动重新拉起进程。当安装完哪吒dashboard和agent后，系统会自动生成类型以下的配置。当然也可以手工追加其它进程来实现该进程的监控保活。
+用于进程监控：当进程不存在时（例如被serv00系统自动杀掉），会自动重新拉起进程。当安装完哪吒dashboard和agent后，系统会自动生成类似以下的配置。当然也可以手工追加其它进程来实现该进程的监控保活。
 
 ```
 /home/vfhky/nezha_app/agent|nezha-agent|sh nezha-agent.sh|foreground
@@ -67,7 +68,7 @@ s9.serv00.com|22|vhub|password
 
 1、常规手工安装方式： 包括如何server00开启应用、开启端口、申请github的token等等，[《在serv00主机上安装哪吒探针》](https://typecodes.com/linux/server00installnezha.html)
 
-2、使用项目脚本进行安装： [《serv00和ct8主机一键安装哪吒探针和多主机保活》](https://typecodes.com/python/serv00ct8nezha.html)
+2、使用项目一键安装： [《serv00和ct8主机一键安装哪吒探针和多主机保活》](https://typecodes.com/python/serv00ct8nezha.html)
 
 3、项目的架构说明： [《serv00和ct8主机一键安装哪吒探针和多主机保活(二)》](https://typecodes.com/python/serv00ct8nezha2.html)
 
@@ -75,4 +76,6 @@ s9.serv00.com|22|vhub|password
 
 5、utils.sh工具类使用教程： [《serv00和ct8主机一键安装哪吒探针和多主机保活(四)》](https://typecodes.com/python/serv00ct8nezha4.html)
 
-5、使用七牛、腾讯云cos、阿里云oss云存储备份哪吒面板数据库的使用教程： [《serv00和ct8主机一键安装哪吒探针和多主机保活(五)》](https://typecodes.com/python/serv00ct8nezha5.html)
+6、使用七牛、腾讯云cos、阿里云oss云存储备份哪吒面板数据库的使用教程： [《serv00和ct8主机一键安装哪吒探针和多主机保活(五)》](https://typecodes.com/python/serv00ct8nezha5.html)
+
+7、修复项目中哪吒面板不显示主机区域的问题： [《serv00和ct8主机一键安装哪吒探针和多主机保活(六)》](https://typecodes.com/python/serv00ct8nezha6.html)

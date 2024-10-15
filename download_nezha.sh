@@ -210,7 +210,7 @@ modify_dashboard_config() {
         mv -f /tmp/nezha-docker-compose.yaml ${NZ_DASHBOARD_PATH}/docker-compose.yaml
     fi
 
-    printf "面板配置 ${green}修改成功，请稍等重启生效${plain}\n"
+    printf "===> 面板配置 ${green}修改成功 ${plain}\n"
 }
 
 download_dashboard() {
@@ -251,14 +251,38 @@ download_dashboard() {
         exit 1
     fi
 
-    version_file="${NZ_DASHBOARD_PATH}/version.txt"
-    unzip -oqq "${NZ_DASHBOARD_PATH}"/app.zip -d "${NZ_DASHBOARD_PATH}" \
-        && echo "v=${version_num}" > "${version_file}"
-    \rm -rf "${NZ_DASHBOARD_PATH}"/app.zip
-
     echo "===> [dashboard] ${NZ_DASHBOARD_URL} 下载完成"
 
-    modify_dashboard_config
+    local config_file="${NZ_DASHBOARD_PATH}/data/config.yaml"
+    local config_file_bak=''
+    if [[ -f "${config_file}" ]]; then
+        config_file_bak="${NZ_DASHBOARD_PATH}/data/config.yaml_bak"
+        \cp -f "${config_file}" "${config_file_bak}"
+        echo "====> 已经备份dashboard的配置文件[${config_file}] 到 ${config_file_bak}"
+    fi
+
+    version_file="${NZ_DASHBOARD_PATH}/version.txt"
+    if ! unzip -oqq "${NZ_DASHBOARD_PATH}"/app.zip -d "${NZ_DASHBOARD_PATH}"; then
+        echo "====> [dashboard] ${NZ_DASHBOARD_PATH}/app.zip 解压失败"
+        exit 1
+    fi
+
+    echo "v=${version_num}" > "${version_file}"
+    \rm -rf "${NZ_DASHBOARD_PATH}"/app.zip
+
+    if [[ -f "${config_file_bak}" ]]; then
+        prompt_input "===> 是否继续使用旧的配置数据: " "" modify
+        if [[ "${modify}" =~ ^[Yy]$ ]]; then
+            mv -f "${config_file_bak}" "${config_file}"
+            echo "===> [dashboard] 已经成功使用旧的配置数据 ${config_file}"
+        else
+            echo "===> [dashboard] 准备输入新的配置数据"
+            modify_dashboard_config
+        fi
+    else
+        echo "===> [dashboard] 准备输入新的配置数据"
+        modify_dashboard_config
+    fi
 }
 
 download_dashboard2() {

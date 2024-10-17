@@ -218,6 +218,7 @@ download_dashboard() {
     install_base
 
     NZ_DASHBOARD_PATH=$1
+    mkdir -p "${NZ_DASHBOARD_PATH}"
 
     local version=$(curl -m 10 -sL "https://api.github.com/repos/naiba/nezha/releases/latest" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
     if [ ! -n "$version" ]; then
@@ -283,52 +284,6 @@ download_dashboard() {
         echo "===> [dashboard] 准备输入新的配置数据"
         modify_dashboard_config
     fi
-}
-
-download_dashboard2() {
-    pre_check
-    install_base
-
-    NZ_DASHBOARD_PATH=$1
-    mkdir -p "${NZ_DASHBOARD_PATH}" >/dev/null 2>&1
-
-    # API rate limit exceeded : curl -H "Authorization: token $TOKEN" -m 10 -sL "https://api.github.com/repos/vfhky/nezha/releases/latest"
-    local version=$(curl -m 10 -sL "https://api.github.com/repos/vfhky/nezha/releases/latest" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
-    if [ ! -n "$version" ]; then
-        version=$(curl -m 10 -sL "https://gitee.com/api/v5/repos/naibahq/nezha/releases/latest" | awk -F '"' '{for(i=1;i<=NF;i++){if($i=="tag_name"){print $(i+2)}}}')
-    fi
-    if [ ! -n "$version" ]; then
-        version=$(curl -m 10 -sL "https://fastly.jsdelivr.net/gh/naiba/nezha/" | grep "option\.value" | awk -F "'" '{print $2}' | sed 's/naiba\/nezha@/v/g')
-    fi
-    if [ ! -n "$version" ]; then
-        version=$(curl -m 10 -sL "https://gcore.jsdelivr.net/gh/naiba/nezha/" | grep "option\.value" | awk -F "'" '{print $2}' | sed 's/naiba\/nezha@/v/g')
-    fi
-
-    if [ ! -n "$version" ]; then
-        err "获取版本号失败，请检查本机能否链接 https://api.github.com/repos/vfhky/nezha/releases/latest"
-        return 1
-    else
-        version_num=$(echo "$version" | sed 's/^v//')
-        echo "当前最新版本为: v${version_num}"
-    fi
-
-    if [ -z "$CN" ]; then
-        NZ_DASHBOARD_URL="https://${GITHUB_URL}/vfhky/nezha/releases/download/$version/nezha-dashboard-${os_type}-$os_arch.zip"
-    else
-        NZ_DASHBOARD_URL="https://${GITHUB_URL}/naibahq/nezha/releases/download/$version/nezha-dashboard-${os_type}-$os_arch.zip"
-    fi
-
-    if ! wget -qO "${NZ_DASHBOARD_PATH}/app.zip" "${NZ_DASHBOARD_URL}"; then
-        err "下载安装包失败，请手工访问检查 ${NZ_DASHBOARD_URL}"
-        return 1
-    fi
-
-    unzip -qo "${NZ_DASHBOARD_PATH}/app.zip" -d "${NZ_DASHBOARD_PATH}"
-    rm -rf "${NZ_DASHBOARD_PATH}/app.zip"
-
-    echo "===> dashboard ${NZ_DASHBOARD_URL} 下载完成"
-
-    modify_dashboard_config
 }
 
 download_agent() {

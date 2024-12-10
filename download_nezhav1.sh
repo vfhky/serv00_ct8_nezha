@@ -162,13 +162,6 @@ modify_dashboard_config() {
         return 0
     fi
 
-    debug: false
-    listenport: nz_port
-    language: nz_language
-    sitename: "nz_site_title"
-    installhost: nz_hostport
-    tls: nz_tls
-
     prompt_input "===> 请输入探针标题(如 TypeCodes Monitor): " "TypeCodes Monitor" nz_site_title
     prompt_input "===> 请输入探针访问端口(如 80):  " "" nz_port
     prompt_input "===> 请输入用于 Agent 接入的 GRPC 通信端口:  " "" nz_hostport
@@ -318,6 +311,8 @@ gen_agent_config() {
     return 1
   fi
 
+  \rm -rf "$file_path"
+
   cat > "$file_path" <<EOF
 client_secret: your_agent_secret
 debug: false
@@ -339,36 +334,36 @@ use_gitee_to_upgrade: false
 use_ipv6_country_code: false
 uuid: your_uuid
 EOF
+
+prompt_input "===> 请输入面板配置文件中的密钥agentsecretkey: " "" your_agent_secret
+prompt_input "===> 启用针对 gRPC 端口的 SSL/TLS加密，无特殊情况请选择false-否 true-是: " "false" your_tls
+prompt_input "===> 请输面板设置的 GRPC 通信端口:  " "" your_dashboard_ip_port
+your_uuid=$(uuidgen)
+
+#sed -i "s/your_agent_secret/${your_agent_secret}/" "$file_path"
+sed -i '' "s/your_agent_secret/${your_agent_secret}/" "$file_path"
+
+#sed -i "s/your_tls/${your_tls}/" "$file_path"
+sed -i '' "s/your_tls/${your_tls}/" "$file_path"
+
+#sed -i "s/your_dashboard_ip_port/${your_dashboard_ip_port}/" "$file_path"
+sed -i '' "s/your_dashboard_ip_port/${your_dashboard_ip_port}/" "$file_path"
+
+#sed -i "s/your_uuid/${your_uuid}/" "$file_path"
+sed -i '' "s/your_uuid/${your_uuid}/" "$file_path"
 }
 
 gen_agent_run_sh() {
     agent_run_sh="${NZ_AGENT_PATH}/nezha-agent.sh"
-
-    prompt_input "===> 请输入面板的域名: " "" nz_proxy_domain
-    prompt_input "===> 请输面板设置的 GRPC 通信端口:  " "" nz_proxy_port
-    prompt_input "===> 面板的设置agent密钥，也可以后期再修改: " "password1234" nz_password
-    prompt_input "===> 启用针对 gRPC 端口的 SSL/TLS加密，无特殊情况请选择N-否: " "N" nz_tls
-
-    user_tmpdir="${NZ_AGENT_PATH}/tmp"
-    if [ ! -d "${user_tmpdir}" ]; then
-        mkdir -p "${user_tmpdir}"
-    fi
-
-    tls_flag=""
-    if echo "$nz_tls" | grep -qiw 'Y'; then
-        tls_flag="--tls"
-    fi
+    agent_config_file="${NZ_AGENT_PATH}/config.yml"
+    gen_agent_config "${agent_config_file}"
 
     cat <<EOF > "${agent_run_sh}"
 #!/bin/bash
 
-export TMPDIR=${user_tmpdir}
-
 nohup ${NZ_AGENT_PATH}/nezha-agent \\
-    -s ${nz_proxy_domain}:${nz_proxy_port} \\
-    -p ${nz_password} \\
-    $tls_flag \\
-    -d > /dev/null 2>&1 &
+    -c ${agent_config_file} \\
+    > /dev/null 2>&1 &
 EOF
 
     chmod +x "${agent_run_sh}"
@@ -401,14 +396,17 @@ modify_config() {
     prompt_input "===> 是否修改agent配置: " "N" modify
     if [[ "${modify}" =~ ^[Yy]$ ]]; then
         NZ_AGENT_PATH="${NZ_APP_PATH}/agent"
-        agent_run_sh="${NZ_AGENT_PATH}/nezha-agent.sh"
-        if [[ ! -f "${agent_run_sh}" ]]; then
-            echo "agent的配置文件[${agent_run_sh}]不存在，请检查是否已经安装过了agent"
+        agent_config_file="${NZ_AGENT_PATH}/config.yml"
+        if [[ ! -f "${agent_config_file}" ]]; then
+            echo "agent的配置文件[${agent_config_file}]不存在，请检查是否已经安装过了agent"
             exit 1
         fi
 
-        echo "====> 准备开始修改agent配置文件[${NZ_DASHBOARD_CONFIG_FILE}]"
-        gen_agent_run_sh
+        echo "====> 准备开始修改agent配置文件[${agent_config_file}]"
+
+        local agent_config_file_bak="${agent_config_file}.$(date +%Y_%m_%d_%H_%M)"
+        \cp -f "${agent_config_file}" "${agent_config_file_bak}"
+        gen_agent_config "${agent_config_file}"
 
         agent_pid=$(pgrep -f nezha-agent)
         if [[ -n "$agent_pid" ]]; then

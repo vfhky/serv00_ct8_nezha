@@ -338,6 +338,21 @@ restart() {
     fi
 }
 
+show_agent_key() {
+    if [ "$#" -ne 1 ]; then
+        echo "Usage: $0 modify_config v0/v1"
+        exit 1
+    fi
+
+    local dashboard_config_file="$1"
+    agent_secret_key=$(grep -oP '(?<=agentsecretkey: ).*' "$file_path")
+    if [[ -n "$agent_secret_key" ]]; then
+        echo "====> 已经找到用于agent连接的密钥: $agent_secret_key"
+    else
+        echo "====> 未找到用于agent连接的密钥,请检查面板的配置文件: cat $dashboard_config_file"
+    fi
+}
+
 case "$1" in
     "init")
         init_all
@@ -386,6 +401,10 @@ case "$1" in
     "restart")
         restart
         ;;
+    "show_agent_key")
+        shift 1
+        show_agent_key "$@"
+        ;;
     *)
         echo "====== 用法 ====="
         echo "$0 init - 优化使用环境"
@@ -401,6 +420,7 @@ case "$1" in
         echo "$0 pushplus - 发送pushplus通知 token title msg"
         echo "$0 restore - 重装系统"
         echo "$0 restart - 重启面板和agent"
+        echo "$0 show_agent_key - 查看面板生成的 agentsecretkey 参数: 面板config.yaml配置文件路径"
         exit 1
         ;;
 esac

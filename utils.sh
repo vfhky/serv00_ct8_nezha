@@ -137,10 +137,24 @@ rename_config_files() {
 }
 
 modify_config() {
+    if [ "$#" -ne 1 ]; then
+        echo "Usage: $0 modify_config v0/v1"
+        exit 1
+    fi
+
+    # v0 or v1
+    local version="$1"
+
     user_name=$(whoami)
     nz_app_path="/home/${user_name}/nezha_app"
     script_dir=$(dirname "$(readlink -f "$0")")
-    download_nezha_sh="${script_dir}/download_nezha.sh"
+    if [ "${version}" == "v0" ]; then
+      download_nezha_sh="${script_dir}/download_nezha.sh"
+      echo "==> 即将修改 v0 版本的配置"
+    else
+      download_nezha_sh="${script_dir}/download_nezha_v1.sh"
+      echo "==> 即将修改 v1 版本的配置"
+    fi
     heart_beat_entry_sh="${script_dir}/heart_beat_entry.sh"
 
     # 执行下载配置脚本
@@ -382,7 +396,7 @@ case "$1" in
         echo "$0 cron - 添加定时任务, 参数: '定时时间' '脚本路径' [脚本参数...]"
         echo "$0 check - [1-增加本机监控 0-关闭本机监控] 配置文件的完整路径"
         echo "$0 rename_config - 从配置模板文件中生成具体配置文件"
-        echo "$0 modify_config - 修改哪吒dashboard或者agent的配置并重启服务"
+        echo "$0 modify_config - 修改哪吒dashboard或者agent的配置并重启服务 参数: v0 或者 v1"
         echo "$0 telegram - 发送telegram通知 chat_id token msg"
         echo "$0 pushplus - 发送pushplus通知 token title msg"
         echo "$0 restore - 重装系统"

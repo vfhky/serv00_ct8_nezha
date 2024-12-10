@@ -1,6 +1,8 @@
 import os
 import socket
 import shlex
+from getpass import getuser
+
 from logger_wrapper import LoggerWrapper
 
 

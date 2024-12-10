@@ -54,6 +54,13 @@ def gen_all_hosts_heart_beat_config(utils_sh_file: str, heart_beat_config_file: 
         except Exception as e:
             print(f"错误: 写入[{host_id}]号主机信息时发生异常: {str(e)}")
 
+def start_process(serv00_ct8_dir: str, host_name: str, user_name: str) -> None:
+    # 通过进程监控配置文件，开启进程
+    print("===> 开始通过进程监控配置文件，开启进程....")
+    heart_beat_entry_file = utils.get_serv00_dir_file(serv00_ct8_dir, 'heart_beat_entry.sh')
+    param = utils.make_heart_beat_extra_info(None, host_name, user_name)
+    utils.run_shell_script_with_os(heart_beat_entry_file, param)
+
 def main():
     host_name, user_name = utils.get_hostname_and_username()
 
@@ -103,25 +110,25 @@ def main():
     if utils.prompt_user_input("拷贝公私钥文件到各个主机(一般是安装面板需要生成，安装agent时不需要)"):
         transfer_ssh_dir_to_all_hosts(config_entries, host_name, user_name, ssh_dir)
 
+    download_nezha_sh = utils.get_serv00_dir_file(serv00_ct8_dir, 'download_nezha.sh')
+    if utils.prompt_user_input("是否选择安装哪吒V1版本(@v1和v0完全不兼容@)"):
+        download_nezha_sh = utils.get_serv00_dir_file(serv00_ct8_dir, 'download_nezha_v1.sh')
+
     if utils.prompt_user_input("安装哪吒dashboard"):
         print("===> 开始安装哪吒dashboard....")
-        utils.run_shell_script_with_os(utils.get_serv00_dir_file(serv00_ct8_dir, 'download_nezha.sh'), "dashboard", dashboard_dir)
+        utils.run_shell_script_with_os(download_nezha_sh, "dashboard", dashboard_dir)
         gen_nezha_monitor_config(utils_sh_file, monitor_config_file, dashboard_dir, "nezha-dashboard", "./nezha-dashboard", "background")
         utils.run_shell_script_with_os(utils_sh_file, "check", "1", sys_config_file)
+        start_process(serv00_ct8_dir, host_name, user_name)
 
     if utils.prompt_user_input("安装哪吒agent"):
         print("===> 开始安装哪吒agent....")
-        utils.run_shell_script_with_os(utils.get_serv00_dir_file(serv00_ct8_dir, 'download_nezha.sh'), "agent", agent_dir)
+        utils.run_shell_script_with_os(download_nezha_sh, "agent", agent_dir)
         gen_nezha_monitor_config(utils_sh_file, monitor_config_file, agent_dir, "nezha-agent", "sh nezha-agent.sh", "foreground")
+        start_process(serv00_ct8_dir, host_name, user_name)
 
     # 生成所有主机的保活配置
     gen_all_hosts_heart_beat_config(utils_sh_file, heart_beat_config_file, config_entries, host_name, user_name)
-
-    # 通过进程监控配置文件，开启进程
-    print("===> 开始通过进程监控配置文件，开启进程....")
-    heart_beat_entry_file = utils.get_serv00_dir_file(serv00_ct8_dir, 'heart_beat_entry.sh')
-    param = utils.make_heart_beat_extra_info(None, host_name, user_name)
-    utils.run_shell_script_with_os(heart_beat_entry_file, param)
 
     print("=======> 安装结束....")
 

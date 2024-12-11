@@ -2,13 +2,17 @@ serv00和ct8主机一键安装哪吒探针和多主机保活
 ======================================================
 
 ## 1 背景
-基于`serv00`和`ct8`这种配置较低的主机，比较适合用来做探针。目前还没发现能自动安装哪吒面板和agent客户端的脚本，以及多主机间动态保活，所以写了这个项目。效果体验：[https://monitor1.typecodes.us.kg](https://monitor1.typecodes.us.kg) 。
+基于`serv00`和`ct8`这种配置较低的主机，比较适合用来做探针。目前还没发现能自动安装哪吒面板和agent客户端的脚本，以及多主机间动态保活，所以写了这个项目。
+
+哪吒v0版本的效果体验：[https://monitor1.typecodes.us.kg](https://monitor1.typecodes.us.kg) 。
+
+哪吒v1版本的效果体验：[https://monitor2.typecodes.us.kg](https://monitor2.typecodes.us.kg) 。
 
 
 ## 2 特点
 
 ```
-1、支持分别安装最新版本的哪吒dashboard和agent客户端，且安装时基本一路点确认即可，无需复杂操作；
+1、支持分别安装最新v1或者v0版本的哪吒探针dashboard和agent客户端，且安装时基本一路点确认即可，无需复杂操作；
 2、弃用PM2，使用脚本进行进程监控，尽量避免被serv00或者ct8杀掉；
 3、自动生成crontab，实现进程监控和主机保活；
 4、对于多个主机，可以实现相互保活；
@@ -79,3 +83,5 @@ s9.serv00.com|22|vhub|password
 6、使用七牛、腾讯云cos、阿里云oss云存储备份哪吒面板数据库的使用教程： [《serv00和ct8主机一键安装哪吒探针和多主机保活(五)》](https://typecodes.com/python/serv00ct8nezha5.html)
 
 7、修复项目中哪吒面板不显示主机区域的问题： [《serv00和ct8主机一键安装哪吒探针和多主机保活(六)》](https://typecodes.com/python/serv00ct8nezha6.html)
+
+8、支持安装哪吒探针V1： [serv00和ct8主机一键安装哪吒探针V1版本和多主机保活](https://typecodes.com/python/serv00ct8nezhav1.html)

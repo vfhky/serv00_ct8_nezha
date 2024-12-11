@@ -241,7 +241,7 @@ download_dashboard() {
     \rm -rf "${NZ_DASHBOARD_PATH}"/app.zip
 
     if [[ -f "${config_file_bak}" ]]; then
-        prompt_input "===> 是否继续使用旧的配置数据: " "" modify
+        prompt_input "===> 是否继续使用旧的配置数据(Y/y 是，N/n 否): " "" modify
         if [[ "${modify}" =~ ^[Yy]$ ]]; then
             mv -f "${config_file_bak}" "${config_file}"
             echo "===> [dashboard] 已经成功使用旧的配置数据 ${config_file}"

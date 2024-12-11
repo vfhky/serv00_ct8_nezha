@@ -349,7 +349,7 @@ show_agent_key() {
     if [[ -n "$agent_secret_key" ]]; then
         echo "====> 已经找到用于agent连接的密钥: $agent_secret_key"
     else
-        echo "====> 未找到用于agent连接的密钥,请检查面板的配置文件: cat $dashboard_config_file"
+        echo "====> 未找到用于agent连接的密钥, 请手工执行命令获取: grep agentsecretkey $dashboard_config_file"
     fi
 }
 

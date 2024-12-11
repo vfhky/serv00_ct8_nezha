@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sys
+import time
 from typing import List, Dict
 from host_config_entry import HostConfigEntry
 from sys_config_entry import SysConfigEntry
@@ -123,6 +124,7 @@ def main():
         gen_nezha_monitor_config(utils_sh_file, monitor_config_file, dashboard_dir, "nezha-dashboard", "./nezha-dashboard", "background")
         utils.run_shell_script_with_os(utils_sh_file, "check", "1", sys_config_file)
         start_process(serv00_ct8_dir, host_name, user_name)
+        time.sleep(3)
         utils.run_shell_script_with_os(utils_sh_file, "show_agent_key", utils.get_dashboard_config_file(user_name))
 
     if utils.prompt_user_input("开始安装哪吒agent"):

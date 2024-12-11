@@ -110,11 +110,14 @@ def main():
     if utils.prompt_user_input("拷贝公私钥文件到各个主机(一般是安装面板需要生成，安装agent时不需要)"):
         transfer_ssh_dir_to_all_hosts(config_entries, host_name, user_name, ssh_dir)
 
-    download_nezha_sh = utils.get_serv00_dir_file(serv00_ct8_dir, 'download_nezha.sh')
-    if utils.prompt_user_input("是否选择安装哪吒V1版本(@v1和v0完全不兼容@)"):
+    if utils.prompt_user_input("选择安装哪吒V1版本？(V1和V0完全不兼容，请确认):")
         download_nezha_sh = utils.get_serv00_dir_file(serv00_ct8_dir, 'download_nezha_v1.sh')
+        print("===＞ 您选择安装哪吒V1版本。")
+    else:
+        download_nezha_sh = utils.get_serv00_dir_file(serv00_ct8_dir, 'download_nezha.sh')
+        print("===＞ 您选择安装哪吒V0版本。")
 
-    if utils.prompt_user_input("安装哪吒dashboard"):
+    if utils.prompt_user_input("开始安装哪吒dashboard"):
         print("===> 开始安装哪吒dashboard....")
         utils.run_shell_script_with_os(download_nezha_sh, "dashboard", dashboard_dir)
         gen_nezha_monitor_config(utils_sh_file, monitor_config_file, dashboard_dir, "nezha-dashboard", "./nezha-dashboard", "background")
@@ -122,7 +125,7 @@ def main():
         start_process(serv00_ct8_dir, host_name, user_name)
         utils.run_shell_script_with_os(utils_sh_file, "show_agent_key", utils.get_dashboard_config_file(user_name))
 
-    if utils.prompt_user_input("安装哪吒agent"):
+    if utils.prompt_user_input("开始安装哪吒agent"):
         print("===> 开始安装哪吒agent....")
         utils.run_shell_script_with_os(download_nezha_sh, "agent", agent_dir)
         gen_nezha_monitor_config(utils_sh_file, monitor_config_file, agent_dir, "nezha-agent", "sh nezha-agent.sh", "foreground")

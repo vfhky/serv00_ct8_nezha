@@ -1,6 +1,8 @@
 import os
 import socket
 import shlex
+from getpass import getuser
+
 from logger_wrapper import LoggerWrapper
 
 
@@ -46,6 +48,10 @@ def get_app_dir(user_name):
 
 def get_dashboard_dir(user_name):
     return os.path.join(get_app_dir(user_name), 'dashboard')
+
+def get_dashboard_config_file(user_name):
+    config_dir = get_dashboard_dir(user_name)
+    return os.path.join(config_dir, 'data/config.yaml')
 
 def get_dashboard_db_file(user_name):
     dashboard_dir = get_dashboard_dir(user_name)

@@ -137,10 +137,24 @@ rename_config_files() {
 }
 
 modify_config() {
+    if [ "$#" -ne 1 ]; then
+        echo "Usage: $0 modify_config v0/v1"
+        exit 1
+    fi
+
+    # v0 or v1
+    local version="$1"
+
     user_name=$(whoami)
     nz_app_path="/home/${user_name}/nezha_app"
     script_dir=$(dirname "$(readlink -f "$0")")
-    download_nezha_sh="${script_dir}/download_nezha.sh"
+    if [ "${version}" == "v0" ]; then
+      download_nezha_sh="${script_dir}/download_nezha.sh"
+      echo "==> 即将修改 v0 版本的配置"
+    else
+      download_nezha_sh="${script_dir}/download_nezha_v1.sh"
+      echo "==> 即将修改 v1 版本的配置"
+    fi
     heart_beat_entry_sh="${script_dir}/heart_beat_entry.sh"
 
     # 执行下载配置脚本
@@ -324,6 +338,21 @@ restart() {
     fi
 }
 
+show_agent_key() {
+    if [ "$#" -ne 1 ]; then
+        echo "Usage: $0 modify_config v0/v1"
+        exit 1
+    fi
+
+    local dashboard_config_file="$1"
+    local agent_secret_key=$(grep -E '^agentsecretkey:' "$dashboard_config_file" | awk -F ': ' '{print $2}' | sed 's/^\\s*//;s/\\s*$//')
+    if [[ -n "$agent_secret_key" ]]; then
+        echo "====> 已经找到用于agent连接的密钥: $agent_secret_key"
+    else
+        echo "====> 未找到用于agent连接的密钥,请检查面板的配置文件: cat $dashboard_config_file"
+    fi
+}
+
 case "$1" in
     "init")
         init_all
@@ -372,6 +401,10 @@ case "$1" in
     "restart")
         restart
         ;;
+    "show_agent_key")
+        shift 1
+        show_agent_key "$@"
+        ;;
     *)
         echo "====== 用法 ====="
         echo "$0 init - 优化使用环境"
@@ -382,11 +415,12 @@ case "$1" in
         echo "$0 cron - 添加定时任务, 参数: '定时时间' '脚本路径' [脚本参数...]"
         echo "$0 check - [1-增加本机监控 0-关闭本机监控] 配置文件的完整路径"
         echo "$0 rename_config - 从配置模板文件中生成具体配置文件"
-        echo "$0 modify_config - 修改哪吒dashboard或者agent的配置并重启服务"
+        echo "$0 modify_config - 修改哪吒dashboard或者agent的配置并重启服务 参数: v0 或者 v1"
         echo "$0 telegram - 发送telegram通知 chat_id token msg"
         echo "$0 pushplus - 发送pushplus通知 token title msg"
         echo "$0 restore - 重装系统"
         echo "$0 restart - 重启面板和agent"
+        echo "$0 show_agent_key - 查看面板生成的 agentsecretkey 参数: 面板config.yaml配置文件路径"
         exit 1
         ;;
 esac

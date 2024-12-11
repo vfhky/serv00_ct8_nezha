@@ -7,20 +7,22 @@ from host_config_entry import HostConfigEntry
 from sys_config_entry import SysConfigEntry
 import utils
 
+
 def gen_ed25519(utils_sh_file: str, ssh_dir: str) -> None:
     if not utils.run_shell_script_with_os(utils_sh_file, 'init') or not utils.run_shell_script_with_os(utils_sh_file, 'key'):
         print("生成公私钥失败，请检查~/.ssh/目录")
         sys.exit(1)
-    
+
     ed25519_files = {
         'pub': f'{ssh_dir}/id_ed25519.pub',
         'private': f'{ssh_dir}/id_ed25519',
         'auth': f'{ssh_dir}/authorized_keys'
     }
-    
+
     if not all(utils.check_file_exists(os.path.expanduser(file)) for file in ed25519_files.values()):
         print("公私钥缺失异常，请检查~/.ssh/目录")
         sys.exit(1)
+
 
 def transfer_ssh_dir_to_all_hosts(config_entries: List[Dict], host_name: str, user_name: str, local_dir: str) -> None:
     for host_id, entry in enumerate(config_entries, 1):
@@ -28,20 +30,25 @@ def transfer_ssh_dir_to_all_hosts(config_entries: List[Dict], host_name: str, us
         if not client:
             print(f"==> [{host_id}]号主机未连接成功 [{entry['username']}@{entry['hostname']}:{entry['port']}]")
             continue
-        
+
         if entry['hostname'] == host_name and entry['username'] == user_name:
             print(f"==> [{host_id}]号主机为当前主机，不需要处理")
             continue
-        
+
         print(f"==> 开始拷贝到[{host_id}]号主机 [{entry['username']}@{entry['hostname']}:{entry['port']}]...")
         remote_dir = utils.get_ssh_dir(entry['username'])
         client.transfer_files(local_dir, remote_dir)
 
-def gen_nezha_monitor_config(utils_sh_file: str, monitor_config_file: str, nezha_dir: str, process_name: str, process_run: str, process_run_mode: str) -> None:
-    print(f"====> 开始把进程[{process_name}]写入到监控配置文件中{monitor_config_file}")
-    utils.run_shell_script_with_os(utils_sh_file, 'monitor', monitor_config_file, nezha_dir, process_name, process_run, process_run_mode)
 
-def gen_all_hosts_heart_beat_config(utils_sh_file: str, heart_beat_config_file: str, config_entries: List[Dict], host_name: str, user_name: str) -> None:
+def gen_nezha_monitor_config(utils_sh_file: str, monitor_config_file: str, nezha_dir: str, process_name: str,
+                             process_run: str, process_run_mode: str) -> None:
+    print(f"====> 开始把进程[{process_name}]写入到监控配置文件中{monitor_config_file}")
+    utils.run_shell_script_with_os(utils_sh_file, 'monitor', monitor_config_file, nezha_dir, process_name,
+                                   process_run, process_run_mode)
+
+
+def gen_all_hosts_heart_beat_config(utils_sh_file: str, heart_beat_config_file: str, config_entries: List[Dict],
+                                    host_name: str, user_name: str) -> None:
     print(f"==> 开始把所有主机信息写入到心跳配置文件中{heart_beat_config_file}")
     for host_id, entry in enumerate(config_entries, 1):
         if host_name == entry["hostname"] and user_name == entry["username"]:
@@ -49,11 +56,13 @@ def gen_all_hosts_heart_beat_config(utils_sh_file: str, heart_beat_config_file: 
             continue
         print(f"====> 开始把[{host_id}]号主机[{entry['username']}@{entry['hostname']}]写入到心跳配置文件中{heart_beat_config_file}")
         try:
-            result = utils.run_shell_script_with_os(utils_sh_file, 'heart', heart_beat_config_file, entry["hostname"], str(entry["port"]), entry["username"])
+            result = utils.run_shell_script_with_os(utils_sh_file, 'heart', heart_beat_config_file, entry["hostname"],
+                                                    str(entry["port"]), entry["username"])
             if not result:
                 print(f"警告: 写入[{host_id}]号主机信息失败")
         except Exception as e:
             print(f"错误: 写入[{host_id}]号主机信息时发生异常: {str(e)}")
+
 
 def start_process(serv00_ct8_dir: str, host_name: str, user_name: str) -> None:
     # 通过进程监控配置文件，开启进程
@@ -61,6 +70,7 @@ def start_process(serv00_ct8_dir: str, host_name: str, user_name: str) -> None:
     heart_beat_entry_file = utils.get_serv00_dir_file(serv00_ct8_dir, 'heart_beat_entry.sh')
     param = utils.make_heart_beat_extra_info(None, host_name, user_name)
     utils.run_shell_script_with_os(heart_beat_entry_file, param)
+
 
 def main():
     host_name, user_name = utils.get_hostname_and_username()
@@ -89,11 +99,8 @@ def main():
     monitor_config_file = utils.get_serv00_config_file(serv00_ct8_dir, 'monitor.conf')
     heart_beat_config_file = utils.get_serv00_config_file(serv00_ct8_dir, 'heartbeat.conf')
 
-    # 要执行的脚本文件
-    process_monitor_file = utils.get_serv00_dir_file(serv00_ct8_dir, 'process_monitor.sh')
-
     # 加载系统配置
-    sys_config_entry = SysConfigEntry(sys_config_file)
+    SysConfigEntry(sys_config_file)
 
     # 初始化
     utils.run_shell_script_with_os(utils_sh_file, "init")
@@ -121,7 +128,8 @@ def main():
     if utils.prompt_user_input("开始安装哪吒dashboard"):
         print("===> 开始安装哪吒dashboard....")
         utils.run_shell_script_with_os(download_nezha_sh, "dashboard", dashboard_dir)
-        gen_nezha_monitor_config(utils_sh_file, monitor_config_file, dashboard_dir, "nezha-dashboard", "./nezha-dashboard", "background")
+        gen_nezha_monitor_config(utils_sh_file, monitor_config_file, dashboard_dir, "nezha-dashboard",
+                                 "./nezha-dashboard", "background")
         utils.run_shell_script_with_os(utils_sh_file, "check", "1", sys_config_file)
         start_process(serv00_ct8_dir, host_name, user_name)
         sleep(3)
@@ -130,13 +138,15 @@ def main():
     if utils.prompt_user_input("开始安装哪吒agent"):
         print("===> 开始安装哪吒agent....")
         utils.run_shell_script_with_os(download_nezha_sh, "agent", agent_dir)
-        gen_nezha_monitor_config(utils_sh_file, monitor_config_file, agent_dir, "nezha-agent", "sh nezha-agent.sh", "foreground")
+        gen_nezha_monitor_config(utils_sh_file, monitor_config_file, agent_dir, "nezha-agent", 
+                                 "sh nezha-agent.sh", "foreground")
         start_process(serv00_ct8_dir, host_name, user_name)
 
     # 生成所有主机的保活配置
     gen_all_hosts_heart_beat_config(utils_sh_file, heart_beat_config_file, config_entries, host_name, user_name)
 
     print("=======> 安装结束....")
+
 
 if __name__ == '__main__':
     main()

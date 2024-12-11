@@ -112,10 +112,10 @@ def main():
 
     if utils.prompt_user_input("选择安装哪吒V1版本？(V1和V0完全不兼容，请确认)"):
         download_nezha_sh = utils.get_serv00_dir_file(serv00_ct8_dir, 'download_nezha_v1.sh')
-        print("===＞ 您选择安装哪吒V1版本。")
+        print("===> 您选择安装哪吒V1版本。")
     else:
         download_nezha_sh = utils.get_serv00_dir_file(serv00_ct8_dir, 'download_nezha.sh')
-        print("===＞ 您选择安装哪吒V0版本。")
+        print("===> 您选择安装哪吒V0版本。")
 
     if utils.prompt_user_input("开始安装哪吒dashboard"):
         print("===> 开始安装哪吒dashboard....")

@@ -164,7 +164,7 @@ modify_dashboard_config() {
 
     prompt_input "===> 请输入面板标题(如 TypeCodes Monitor): " "TypeCodes Monitor" nz_site_title
     prompt_input "===> 请输入面板访问端口(如 80):  " "" nz_port
-    prompt_input "===> 请输入用于 Agent 接入的 GRPC 通信端口:  " "" nz_hostport
+    prompt_input "===> 请输入面板设置的 GRPC 通信地址(例如 vfhky.serv00.net:8888)  " "" nz_hostport
     prompt_input "===> 启用针对 gRPC 端口的 SSL/TLS加密，无特殊情况请选择false-否 true-是: " "false" nz_tls
 
     #sed -i "s/nz_site_title/${nz_site_title}/" "${config_file}"
@@ -337,7 +337,7 @@ EOF
 
 prompt_input "===> 请输入面板配置文件中的密钥agentsecretkey: " "" your_agent_secret
 prompt_input "===> 启用针对 gRPC 端口的 SSL/TLS加密，无特殊情况请选择false-否 true-是: " "false" your_tls
-prompt_input "===> 请输面板设置的 GRPC 通信地址(例如 vfhky.serv00.net:8888):  " "" your_dashboard_ip_port
+prompt_input "===> 请输入面板设置的 GRPC 通信地址(例如 vfhky.serv00.net:8888):  " "" your_dashboard_ip_port
 your_uuid=$(uuidgen)
 
 #sed -i "s/your_agent_secret/${your_agent_secret}/" "$file_path"

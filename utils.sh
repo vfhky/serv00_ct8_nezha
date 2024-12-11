@@ -345,7 +345,7 @@ show_agent_key() {
     fi
 
     local dashboard_config_file="$1"
-    agent_secret_key=$(grep -oP '(?<=agentsecretkey: ).*' "$file_path")
+    local agent_secret_key=$(grep -E '^agentsecretkey:' "$dashboard_config_file" | awk -F ': ' '{print $2}' | sed 's/^\\s*//;s/\\s*$//')
     if [[ -n "$agent_secret_key" ]]; then
         echo "====> 已经找到用于agent连接的密钥: $agent_secret_key"
     else

@@ -353,6 +353,51 @@ show_agent_key() {
     fi
 }
 
+uninstall() {
+    local script_dir=$(cd "$(dirname "$0")" && pwd)
+    local config_file="${script_dir}/config/monitor.conf"
+    if [[ ! -f "$config_file" ]]; then
+        echo "配置文件 $config_file 不存在，退出。"
+        return 1
+    fi
+
+    declare -a process_list
+    while IFS='|' read -r app_path process_name script_command run_mode; do
+        [[ "$app_path" =~ ^#.*$ ]] && continue
+        process_list+=("$app_path|$process_name|$script_command|$run_mode")
+    done < "$config_file"
+
+    for entry in "${process_list[@]}"; do
+        IFS='|' read -ra process_info <<< "$entry"
+        local app_path="${process_info[0]}"
+        local process_name="${process_info[1]}"
+
+        read -r -p "是否要停止进程 [${process_name}] 并删除目录 [${app_path}]？[Y/n] " input_value
+        input_value=${input_value:-Y}
+        if [[ "${input_value,,}" == "y" ]]; then
+            pkill -f "$process_name" && echo "已停止进程 ${process_name}" || echo "停止进程 ${process_name} 失败"
+            if \rm -rf "$app_path"; then
+                echo "已删除目录 ${app_path}"
+            else
+                echo "删除目录 ${app_path} 失败，请检查权限。"
+            fi
+        else
+            echo "跳过进程 ${process_name} 和目录 ${app_path}。"
+        fi
+    done
+
+    # 删除定时任务
+    local cron_tab_serv00_ct8_nezha=$(crontab -l | grep -a "serv00_ct8_nezha")
+    if [[ -n "$cron_tab_serv00_ct8_nezha" ]]; then
+        crontab -l | grep -v "serv00_ct8_nezha" | crontab -
+        echo "已删除定时任务 $｛cron_tab_serv00_ct8_nezha｝"
+    else
+        echo "未找到定时任务 serv00_ct8_nezha"
+    fi
+
+    echo "==== 操作结束 ===="
+}
+
 case "$1" in
     "init")
         init_all
@@ -405,6 +450,9 @@ case "$1" in
         shift 1
         show_agent_key "$@"
         ;;
+    "uninstall")
+        uninstall
+        ;;
     *)
         echo "====== 用法 ====="
         echo "$0 init - 优化使用环境"
@@ -421,6 +469,7 @@ case "$1" in
         echo "$0 restore - 重装系统"
         echo "$0 restart - 重启面板和agent"
         echo "$0 show_agent_key - 查看面板生成的 agentsecretkey 参数: 面板config.yaml配置文件路径"
+        echo "$0 uninstall - 卸载哪吒dashboard和agent"
         exit 1
         ;;
 esac

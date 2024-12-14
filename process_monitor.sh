@@ -21,6 +21,19 @@ done < "$config_file"
 
 script_dir=$(dirname "$(realpath "$0")")
 
+kill_process() {
+    local process_name=$1
+    local pids=$(pgrep -f "${process_name}")
+    if [[ -n "$pids" ]]; then
+        for pid in $pids; do
+            kill -15 "$pid" && sleep 2
+            if kill -0 "$pid" 2>/dev/null; then
+                kill -9 "$pid"
+            fi
+        done
+    fi
+}
+
 check_and_restart_processes() {
     for entry in "${process_list[@]}"; do
         IFS='|' read -ra process_info <<< "$entry"
@@ -28,6 +41,8 @@ check_and_restart_processes() {
         local process_name="${process_info[1]}"
         local cmd="${process_info[2]}"
         local run_mode="${process_info[3]}"
+
+        kill_process "$process_name"
 
         if ! pgrep -x "$process_name" > /dev/null; then
             cd "$app_path" || continue

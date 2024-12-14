@@ -128,16 +128,24 @@ def main():
     if utils.prompt_user_input("开始安装哪吒dashboard"):
         print("===> 开始安装哪吒dashboard....")
         utils.run_shell_script_with_os(download_nezha_sh, "dashboard", dashboard_dir)
-        gen_nezha_monitor_config(utils_sh_file, monitor_config_file, dashboard_dir, "nezha-dashboard",
-                                 "./nezha-dashboard", "background")
+        if not gen_nezha_monitor_config(utils_sh_file, monitor_config_file, dashboard_dir,
+                                        "nezha-dashboard",
+                                        "./nezha-dashboard", "background"):
+            print("===> 安装失败，请稍后再重试....")
+            sys.exit(1)
+
         utils.run_shell_script_with_os(utils_sh_file, "check", "1", sys_config_file)
+
         start_process(serv00_ct8_dir, host_name, user_name)
-        sleep(3)
+        sleep(2)
         utils.run_shell_script_with_os(utils_sh_file, "show_agent_key", utils.get_dashboard_config_file(user_name))
 
     if utils.prompt_user_input("开始安装哪吒agent"):
         print("===> 开始安装哪吒agent....")
-        utils.run_shell_script_with_os(download_nezha_sh, "agent", agent_dir)
+        if not utils.run_shell_script_with_os(download_nezha_sh, "agent", agent_dir):
+            print("===> 安装失败，请稍后再重试....")
+            sys.exit(1)
+
         gen_nezha_monitor_config(utils_sh_file, monitor_config_file, agent_dir, "nezha-agent", 
                                  "sh nezha-agent.sh", "foreground")
         start_process(serv00_ct8_dir, host_name, user_name)

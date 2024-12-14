@@ -191,6 +191,35 @@ modify_dashboard_config() {
     printf "===> 面板配置 ${green}修改成功 ${plain}\n"
 }
 
+curl_with_retries() {
+    local url="$1"
+    local parse_command="$2"
+    local retries="${3:-5}"
+    local timeout="${4:-10}"
+
+    local attempt=0
+    local result=""
+    local curl_error_code=0
+
+    while [[ $attempt -lt $retries ]]; do
+        raw_response=$(curl -m "$timeout" -sL "$url")
+        curl_error_code=$?
+
+        if [[ $curl_error_code -eq 0 && -n "$raw_response" ]]; then
+            result=$(echo "$raw_response" | eval "$parse_command")
+            if [[ -n "$result" ]]; then
+                echo "$result"
+                return 0
+            fi
+        fi
+
+        attempt=$((attempt + 1))
+        echo "访问 [$url] 失败，curl错误码: $curl_error_code (尝试 $attempt/$retries)"
+    done
+
+    return 1
+}
+
 download_dashboard() {
     pre_check
     install_base
@@ -198,15 +227,23 @@ download_dashboard() {
     NZ_DASHBOARD_PATH=$1
     mkdir -p "${NZ_DASHBOARD_PATH}"
 
-    local version=$(curl -m 10 -sL "https://api.github.com/repos/vfhky/nezha-build/releases/latest" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
+    local url="https://api.github.com/repos/vfhky/nezha-build/releases/latest"
+    local parse_command="grep 'tag_name' | head -n 1 | awk -F ':' '{print \$2}' | sed 's/\"//g;s/,//g;s/ //g'"
 
-    if [ ! -n "$version" ]; then
-        err "获取版本号失败，请检查本机能否访问 https://api.github.com/repos/naiba/nezha/releases/latest"
-        return 1
-    else
-        version_num=$(echo "$version" | sed 's/^v//')
-        echo "当前最新版本为: v${version_num}"
+    local version
+    version=$(curl_with_retries "$url" "$parse_command" 4 3)
+    local status=$?
+    if [[ $status -ne 0 || -z "$version"  || ! "$version" =~ ^v ]]; then
+       echo "${version}"
+       exit 1
     fi
+
+    if [[ -z "$version" ]]; then
+        err "获取版本号失败，请检查本机能否访问 $url"
+        return 1
+    fi
+    local version_num=$(echo "$version" | sed 's/^v//')
+    echo "当前最新版本为: v${version_num}"
 
     NZ_DASHBOARD_URL="https://github.com/vfhky/nezha-build/releases/download/${version}/nezha-dashboard.zip"
     #if [ -z "$CN" ]; then

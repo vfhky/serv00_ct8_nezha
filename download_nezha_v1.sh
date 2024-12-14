@@ -191,40 +191,6 @@ modify_dashboard_config() {
     printf "===> 面板配置 ${green}修改成功 ${plain}\n"
 }
 
-curl_with_retries() {
-    local tmp_version='v1.1.4'
-    echo "$tmp_version"
-    return 0
-
-
-    local url="$1"
-    local parse_command="$2"
-    local retries="${3:-5}"
-    local timeout="${4:-10}"
-
-    local attempt=0
-    local result=""
-    local curl_error_code=0
-
-    while [[ $attempt -lt $retries ]]; do
-        raw_response=$(curl -m "$timeout" -sL "$url")
-        curl_error_code=$?
-
-        if [[ $curl_error_code -eq 0 && -n "$raw_response" ]]; then
-            result=$(echo "$raw_response" | eval "$parse_command")
-            if [[ -n "$result" ]]; then
-                echo "$result"
-                return 0
-            fi
-        fi
-
-        attempt=$((attempt + 1))
-        echo "访问 [$url] 失败，curl错误码: $curl_error_code (尝试 $attempt/$retries)"
-    done
-
-    return 1
-}
-
 download_dashboard() {
     pre_check
     install_base
@@ -232,15 +198,17 @@ download_dashboard() {
     NZ_DASHBOARD_PATH=$1
     mkdir -p "${NZ_DASHBOARD_PATH}"
 
-    local url="https://api.github.com/repos/vfhky/nezha-build/releases/latest"
-    local parse_command="grep 'tag_name' | head -n 1 | awk -F ':' '{print \$2}' | sed 's/\"//g;s/,//g;s/ //g'"
+    local version=$(curl -m 3 -sL "https://api.github.com/repos/vfhky/nezha-build/releases/latest" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
+    if [ -z "${version}" ]; then
+        version=$(curl -m 3 -sL "https://fastly.jsdelivr.net/gh/vfhky/nezha-build/" | grep "option\.value" | awk -F "'" '{print $2}' | sed 's/vfhky\/nezha-build@/v/g')
+    fi
+    if [ -z "${version}" ]; then
+        version=$(curl -m 3 -sL "https://gcore.jsdelivr.net/gh/vfhky/nezha-build/" | grep "option\.value" | awk -F "'" '{print $2}' | sed 's/vfhky\/nezha-build@/v/g')
+    fi
 
-    local version
-    version=$(curl_with_retries "$url" "$parse_command" 4 3)
-    local status=$?
-    if [[ $status -ne 0 || -z "$version"  || ! "$version" =~ ^v ]]; then
-       echo "${version}"
-       exit 1
+    if [ -z "$version" ]; then
+        err "获取 Dashboard 版本号失败，请检查本机能否链接 https://api.github.com/repos/vfhky/nezha-build/releases/latest"
+        return 1
     fi
 
     local version_num=$(echo "$version" | sed 's/^v//')

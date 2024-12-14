@@ -127,13 +127,13 @@ def main():
 
     if utils.prompt_user_input("开始安装哪吒dashboard"):
         print("===> 开始安装哪吒dashboard....")
-        utils.run_shell_script_with_os(download_nezha_sh, "dashboard", dashboard_dir)
-        if not gen_nezha_monitor_config(utils_sh_file, monitor_config_file, dashboard_dir,
-                                        "nezha-dashboard",
-                                        "./nezha-dashboard", "background"):
+        if not utils.run_shell_script_with_os(download_nezha_sh, "dashboard", dashboard_dir):
             print("===> 安装失败，请稍后再重试....")
             sys.exit(1)
 
+        gen_nezha_monitor_config(utils_sh_file, monitor_config_file, dashboard_dir,
+                                        "nezha-dashboard",
+                                        "./nezha-dashboard", "background")
         utils.run_shell_script_with_os(utils_sh_file, "check", "1", sys_config_file)
 
         start_process(serv00_ct8_dir, host_name, user_name)

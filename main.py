@@ -71,7 +71,7 @@ def start_process(serv00_ct8_dir: str, host_name: str, user_name: str) -> None:
     param = utils.make_heart_beat_extra_info(None, host_name, user_name)
     utils.run_shell_script_with_os(heart_beat_entry_file, param)
 
-
+@utils.time_count
 def main():
     host_name, user_name = utils.get_hostname_and_username()
 

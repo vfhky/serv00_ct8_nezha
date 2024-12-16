@@ -1,6 +1,8 @@
 import os
 import socket
 import shlex
+import functools
+from time import time
 from getpass import getuser
 
 from logger_wrapper import LoggerWrapper
@@ -8,6 +10,16 @@ from logger_wrapper import LoggerWrapper
 
 # 初始化日志记录器
 logger = LoggerWrapper()
+
+def time_count(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = time()
+        result = func(*args, **kwargs)
+        end_time = time()
+        print(f"=======> 函数 {func.__name__} 总共耗时: {end_time - start_time:.4f}秒")
+        return result
+    return wrapper
 
 def get_shell_run_cmd(shell_path, *args):
     quoted_args = [shlex.quote(str(arg)) for arg in args]

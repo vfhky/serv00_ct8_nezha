@@ -360,15 +360,32 @@ sed -i '' "s/your_uuid/${your_uuid}/" "$file_path"
 }
 
 gen_agent_run_sh() {
-    agent_run_sh="${NZ_AGENT_PATH}/nezha-agent.sh"
-    agent_config_file="${NZ_AGENT_PATH}/config.yml"
-    gen_agent_config "${agent_config_file}"
+    local agent_run_sh="${NZ_AGENT_PATH}/nezha-agent.sh"
+    local config_file="${NZ_AGENT_PATH}/config.yml"
+    local config_file_bak=""
+
+    if [[ -f "${config_file}" ]]; then
+        config_file_bak="${config_file}.$(date +%Y_%m_%d_%H_%M)"
+        prompt_input "===> 是否继续使用旧的配置数据(Y/y 是，N/n 否): " "" modify
+
+        if [[ "${modify}" =~ ^[Yy]$ ]]; then
+            echo "===> [agent] 您选择继续使用旧的配置文件[${config_file}]"
+            exit 0
+        else
+            \cp -f "${config_file}" "${config_file_bak}"
+            echo "===> [agent] 已经备份agent的配置文件到 ${config_file_bak}, 准备输入新的配置数据"
+        fi
+    else
+        echo "===> [agent] 准备输入新的配置数据"
+    fi
+
+    gen_agent_config "${config_file}"
 
     cat <<EOF > "${agent_run_sh}"
 #!/bin/bash
 
 nohup ${NZ_AGENT_PATH}/nezha-agent \\
-    -c ${agent_config_file} \\
+    -c ${config_file} \\
     > /dev/null 2>&1 &
 EOF
 

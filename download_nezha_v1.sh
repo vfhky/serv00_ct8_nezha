@@ -200,6 +200,9 @@ download_dashboard() {
 
     local version=$(curl -m 3 -sL "https://api.github.com/repos/vfhky/nezha-build/releases/latest" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
     if [ -z "${version}" ]; then
+        version=$(curl -m 3 -sL "github-api.vfhky.workers.dev?pj=vfhky/nezha-build" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
+    fi
+    if [ -z "${version}" ]; then
         version=$(curl -m 3 -sL "https://fastly.jsdelivr.net/gh/vfhky/nezha-build/" | grep "option\.value" | awk -F "'" '{print $2}' | sed 's/vfhky\/nezha-build@/v/g')
     fi
     if [ -z "${version}" ]; then

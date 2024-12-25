@@ -338,7 +338,7 @@ server: your_dashboard_ip_port
 skip_connection_count: false
 skip_procs_count: false
 temperature: false
-tls: false
+tls: your_tls
 use_gitee_to_upgrade: false
 use_ipv6_country_code: false
 uuid: your_uuid
@@ -352,8 +352,8 @@ your_uuid=$(uuidgen)
 #sed -i "s/your_agent_secret/${your_agent_secret}/" "$file_path"
 sed -i '' "s/your_agent_secret/${your_agent_secret}/" "$file_path"
 
-#sed -i "s/your_tls/${your_tls}/" "$file_path"
-sed -i '' "s/your_tls/${your_tls}/" "$file_path"
+#sed -i "s/your_tls/${your_tls}/g" "$file_path"
+sed -i '' "s/your_tls/${your_tls}/g" "$file_path"
 
 #sed -i "s/your_dashboard_ip_port/${your_dashboard_ip_port}/" "$file_path"
 sed -i '' "s/your_dashboard_ip_port/${your_dashboard_ip_port}/" "$file_path"

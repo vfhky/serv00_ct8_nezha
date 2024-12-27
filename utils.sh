@@ -390,7 +390,7 @@ uninstall() {
     local cron_tab_serv00_ct8_nezha=$(crontab -l | grep -a "serv00_ct8_nezha")
     if [[ -n "$cron_tab_serv00_ct8_nezha" ]]; then
         crontab -l | grep -v "serv00_ct8_nezha" | crontab -
-        echo "已删除定时任务 $｛cron_tab_serv00_ct8_nezha｝"
+        echo "已删除定时任务 ${cron_tab_serv00_ct8_nezha}"
     else
         echo "未找到定时任务 serv00_ct8_nezha"
     fi

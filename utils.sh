@@ -355,7 +355,8 @@ show_agent_key() {
 
 uninstall() {
     local script_dir=$(cd "$(dirname "$0")" && pwd)
-    local config_file="${script_dir}/config/monitor.conf"
+    local config_dir="${script_dir}/config"
+    local config_file="${config_dir}/monitor.conf"
     if [[ ! -f "$config_file" ]]; then
         echo "配置文件 $config_file 不存在，退出。"
         return 1
@@ -393,6 +394,11 @@ uninstall() {
         echo "已删除定时任务 ${cron_tab_serv00_ct8_nezha}"
     else
         echo "未找到定时任务 serv00_ct8_nezha"
+    fi
+
+    ## 删除配置文件
+    if [ -d "$config_dir" ]; then
+        \rm -rf "${config_dir}"/*.conf*
     fi
 
     echo "==== 操作结束 ===="

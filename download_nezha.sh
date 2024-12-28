@@ -283,8 +283,6 @@ download_agent() {
 
     NZ_AGENT_PATH=$1
 
-    echo "正在获取监控Agent版本号"
-
     local version='v0.20.5'
 
     if [ ! -n "$version" ]; then
@@ -294,7 +292,6 @@ download_agent() {
         echo "当前最新版本为: ${version}"
     fi
 
-    echo "正在下载Agent...."
     if [ -z "$CN" ]; then
         NZ_AGENT_URL="https://${GITHUB_URL}/nezhahq/agent/releases/download/${version}/nezha-agent_${os_type}_${os_arch}.zip"
     else

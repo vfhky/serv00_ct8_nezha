@@ -17,7 +17,15 @@ def time_count(func):
         start_time = time()
         result = func(*args, **kwargs)
         end_time = time()
-        print(f"=======> 函数 {func.__name__} 总共耗时: {end_time - start_time:.4f}秒")
+        elapsed_time = end_time - start_time
+
+        if elapsed_time < 60:
+            print(f"=======> 函数 {func.__name__} 总共耗时: {elapsed_time:.2f} 秒")
+        else:
+            minutes = elapsed_time // 60
+            seconds = elapsed_time % 60
+            print(f"=======> 函数 {func.__name__} 总共耗时: {int(minutes)} 分 {seconds:.2f} 秒")
+
         return result
     return wrapper
 

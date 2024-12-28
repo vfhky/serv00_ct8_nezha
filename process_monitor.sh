@@ -48,10 +48,10 @@ check_and_restart_processes() {
             cd "$app_path" || continue
 
             if [[ "$run_mode" == "background" ]]; then
-                echo "Process will run with nohup command: $cmd"
+                echo "run background command: $cmd"
                 nohup "$cmd" > /dev/null 2>&1 &
-                echo "Process running with nohup command executed"
             else
+                echo "run foreground command: $cmd"
                 $cmd
             fi
             
@@ -60,7 +60,7 @@ check_and_restart_processes() {
             
             sleep 1
         else
-            echo "Process '$process_name' is running."
+            echo "process [$process_name] is running."
         fi
     done
 }

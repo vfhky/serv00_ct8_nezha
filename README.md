@@ -29,20 +29,20 @@ serv00和ct8主机一键安装哪吒探针和多主机保活
 ```
 1、下载脚本: git clone https://github.com/vfhky/serv00_ct8_nezha.git
 2、进入项目: cd serv00_ct8_nezha
-3、修改配置文件: vim config/host.eg 然后新增需要保活的主机配置（非必须的步骤）。
+3、修改配置（非必须的操作）: vim config/host.eg
 4、开始安装: python3 main.py 。
 ```
 
 
 ## 3 配置文件说明
 
-在`config`配置目录下面有4个模板文件，其中`host.eg`和`sys.eg`这两个配置文件是需要【手工配置】，其它两个文件都不需要修改（系统会自动根据相关逻辑生成对应的`xxx.conf`配置文件）。
+在`config`配置目录下面有4个模板文件，其中`host.eg`和`sys.eg`这两个配置文件是需要`【手工配置】`，其它两个文件都不需要修改（系统会自动根据相关逻辑生成对应的`xxx.conf`配置文件）。
 
 #### 3.1 主机配置模板 host.eg
 
-`host.eg`模板文件用于填写需要相互保活的主机信息：如果你只有一台serv00机器，那么就不需要修改；如果你有多台serv00/ct8，那么通过这个配置实现多主机相互保活。
+`host.eg`用于填写需要相互保活的主机信息：如果你只有一台serv00/ct8机器，那么就不需要修改。
 
-例如当前和另外一个s9的serv00机器(用户名是vhub)做相互保活，那么填写：
+当你有多台serv00/ct8，那么通过这个配置实现多主机相互保活。例如用当前serv00/ct8主机和另外一个s9的serv00机器(用户名是vhub)做相互保活，那么在文件中追加如下配置即可：
 
 ```
 s9.serv00.com|22|vhub|password
@@ -50,7 +50,7 @@ s9.serv00.com|22|vhub|password
 
 #### 3.2 系统常量模板 sys.eg
 
-这个是系统配置文件，可以通过修改相关菜单，开启企业微信机器人、企业微信app应用、tg、pushPlus、七牛云备份等功能。
+这个是系统配置文件，可以通过修改相关菜单，可以开启企业微信机器人、企业微信app应用、tg、pushPlus、七牛云备份等功能。
 
 #### 3.3 进程监控模板 monitor.eg
 
@@ -70,22 +70,22 @@ s9.serv00.com|22|vhub|password
 `s9.serv00.com|22|vhub`
 
 
-## 4 其它详细说明
+## 4 相关手册
 
-详细操作过程，进程监控，保活原理以及青龙面板的使用等等，请参考`serv00和ct8主机一键安装哪吒探针和多主机保活`系列文章：
+以下是`安装哪吒探针`、`探针进程监控保活`、`多主机保活原理`、`面板sqlite.db备份`等功能的文档，方便大家参考查阅：
 
-1、常规手工安装方式： 包括如何server00开启应用、开启端口、申请github的token等等，[《在serv00主机上安装哪吒探针》](https://typecodes.com/linux/server00installnezha.html)
+1、常规手工安装哪吒探针V0版本： 包括如何server00开启应用、TCP端口、申请github的token等等，[《在serv00主机上安装哪吒探针》](https://typecodes.com/linux/server00installnezha.html)
 
-2、使用项目一键安装： [《serv00和ct8主机一键安装哪吒探针和多主机保活》](https://typecodes.com/python/serv00ct8nezha.html)
+2、一键安装哪吒探针V0版本： [《serv00和ct8主机一键安装哪吒探针和多主机保活》](https://typecodes.com/python/serv00ct8nezha.html)
 
-3、项目的架构说明： [《serv00和ct8主机一键安装哪吒探针和多主机保活(二)》](https://typecodes.com/python/serv00ct8nezha2.html)
+3、架构说明（含保活原理等）： [《serv00和ct8主机一键安装哪吒探针和多主机保活(二)》](https://typecodes.com/python/serv00ct8nezha2.html)
 
-4、演示青龙面板保活： [《serv00和ct8主机一键安装哪吒探针和多主机保活(三)》](https://typecodes.com/python/serv00ct8nezha3.html)
+4、使用青龙面板对单台serv00保活： [《serv00和ct8主机一键安装哪吒探针和多主机保活(三)》](https://typecodes.com/python/serv00ct8nezha3.html)
 
-5、utils.sh工具类使用教程： [《serv00和ct8主机一键安装哪吒探针和多主机保活(四)》](https://typecodes.com/python/serv00ct8nezha4.html)
+5、utils.sh 强大的serv00脚本工具： [《serv00和ct8主机一键安装哪吒探针和多主机保活(四)》](https://typecodes.com/python/serv00ct8nezha4.html)
 
-6、使用七牛、腾讯云cos、阿里云oss云存储备份哪吒面板数据库的使用教程： [《serv00和ct8主机一键安装哪吒探针和多主机保活(五)》](https://typecodes.com/python/serv00ct8nezha5.html)
+6、使用七牛、腾讯云cos、阿里云oss云存储备份哪吒面板数据库： [《serv00和ct8主机一键安装哪吒探针和多主机保活(五)》](https://typecodes.com/python/serv00ct8nezha5.html)
 
 7、修复项目中哪吒面板不显示主机区域的问题： [《serv00和ct8主机一键安装哪吒探针和多主机保活(六)》](https://typecodes.com/python/serv00ct8nezha6.html)
 
-8、支持安装哪吒探针V1： [serv00和ct8主机一键安装哪吒探针V1版本和多主机保活](https://typecodes.com/python/serv00ct8nezhav1.html)
+8、一键安装哪吒探针V1版本： [serv00和ct8主机一键安装哪吒探针V1版本和多主机保活](https://typecodes.com/python/serv00ct8nezhav1.html)

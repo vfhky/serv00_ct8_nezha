@@ -29,18 +29,20 @@ serv00和ct8主机一键安装哪吒探针和多主机保活
 ```
 1、下载脚本: git clone https://github.com/vfhky/serv00_ct8_nezha.git
 2、进入项目: cd serv00_ct8_nezha
-3、修改配置文件: vim config/host.eg 然后新增需要保活的主机信息。
+3、修改配置文件: vim config/host.eg 然后新增需要保活的主机配置（非必须的步骤）。
 4、开始安装: python3 main.py 。
 ```
 
 
 ## 3 配置文件说明
 
-在`config`配置目录下面有4个模板文件，其中`host.eg`和`sys.eg`这两个配置文件是需要手工配置，其它两个文件都不需要修改，系统会自动根据相关逻辑生成对应的`xxx.conf`配置文件。
+在`config`配置目录下面有4个模板文件，其中`host.eg`和`sys.eg`这两个配置文件是需要【手工配置】，其它两个文件都不需要修改（系统会自动根据相关逻辑生成对应的`xxx.conf`配置文件）。
 
 #### 3.1 主机配置模板 host.eg
 
-`host.eg`模板文件是填写需要相互保活的主机信息。例如当前要保活另外一个s9的serv00机器(用户名是vhub)，那么填写：
+`host.eg`模板文件用于填写需要相互保活的主机信息：如果你只有一台serv00机器，那么就不需要修改；如果你有多台serv00/ct8，那么通过这个配置实现多主机相互保活。
+
+例如当前和另外一个s9的serv00机器(用户名是vhub)做相互保活，那么填写：
 
 ```
 s9.serv00.com|22|vhub|password
@@ -48,13 +50,13 @@ s9.serv00.com|22|vhub|password
 
 #### 3.2 系统常量模板 sys.eg
 
-这个是系统配置文件，可以配置企业微信机器人、企业微信app应用、tg、pushPlus、七牛云备份等功能。
+这个是系统配置文件，可以通过修改相关菜单，开启企业微信机器人、企业微信app应用、tg、pushPlus、七牛云备份等功能。
 
 #### 3.3 进程监控模板 monitor.eg
 
 用于进程监控：当进程（如dashboard面板）不存在时（可能被serv00系统自动杀掉），会自动重新拉起该进程。
 
-当安装完哪吒dashboard和agent后，系统会自动生成类似以下的配置。当然也可以手工追加其它进程来实现该进程的监控保活。
+当安装完哪吒dashboard和agent后，系统会自动生成类似以下的配置。当然也可以手工追加任意你写的进程来实现该进程的监控保活。
 
 ```
 /home/vfhky/nezha_app/agent|nezha-agent|sh nezha-agent.sh|foreground
@@ -63,7 +65,7 @@ s9.serv00.com|22|vhub|password
 
 #### 3.4 多主机心跳保活模板 heartbeat.eg
 
-当手工配置了`host.eg`主机模板并手工执行安装后，系统会根据这个模板自动生成多主机之间，需要保活相互保活的配置信息。示例如下：
+当在`host.eg`配置文件中新增了要相互保活的主机，系统会自动生成多主机间保活相互保活的配置数据（示例如下）：
 
 `s9.serv00.com|22|vhub`
 

@@ -403,16 +403,16 @@ prompt_input "===> 请输入面板设置的 GRPC 通信地址(例如 vfhky.serv0
 your_uuid=$(uuidgen)
 
 #sed -i "s/your_agent_secret/${your_agent_secret}/" "${agent_config_file}"
-sed -i '' "s/your_agent_secret/${your_agent_secret}/" "${}agent_config_file}"
+sed -i '' "s/your_agent_secret/${your_agent_secret}/" "${agent_config_file}"
 
 #sed -i "s/your_tls/${your_tls}/g" "${agent_config_file}"
-sed -i '' "s/your_tls/${your_tls}/g" "${}agent_config_file}"
+sed -i '' "s/your_tls/${your_tls}/g" "${agent_config_file}"
 
 #sed -i "s/your_dashboard_ip_port/${your_dashboard_ip_port}/" "${agent_config_file}"
-sed -i '' "s/your_dashboard_ip_port/${your_dashboard_ip_port}/" "${}agent_config_file}"
+sed -i '' "s/your_dashboard_ip_port/${your_dashboard_ip_port}/" "${agent_config_file}"
 
 #sed -i "s/your_uuid/${your_uuid}/" "${agent_config_file}"
-sed -i '' "s/your_uuid/${your_uuid}/" "${}agent_config_file}"
+sed -i '' "s/your_uuid/${your_uuid}/" "${agent_config_file}"
 }
 
 gen_agent_run_sh() {

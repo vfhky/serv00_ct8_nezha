@@ -147,48 +147,85 @@ modify_dashboard_config() {
     echo "> 修改面板配置"
 
     local config_file="${NZ_DASHBOARD_PATH}/nezha-config.yaml"
-    if [ "$IS_DOCKER_NEZHA" = 1 ]; then
-        echo "正在下载 Docker 脚本"
-        wget -t 2 -T 60 -O /tmp/nezha-docker-compose.yaml https://${GITHUB_RAW_URL}/script/docker-compose.yaml >/dev/null 2>&1
-        if [ $? != 0 ]; then
-            err "下载脚本失败，请检查本机能否连接 ${GITHUB_RAW_URL}"
-            return 0
-        fi
-    fi
 
-    wget -t 2 -T 60 -O "${config_file}" https://${GITHUB_RAW_URL}/extras/config.yaml >/dev/null 2>&1
-    if [ $? != 0 ]; then
-        err "下载脚本失败，请检查本机能否连接 https://${GITHUB_RAW_URL}/extras/config.yaml"
-        return 0
-    fi
+#    wget -t 2 -T 60 -O "${config_file}" https://${GITHUB_RAW_URL}/extras/config.yaml >/dev/null 2>&1
+#    if [ $? != 0 ]; then
+#        err "下载脚本失败，请检查本机能否连接 https://${GITHUB_RAW_URL}/extras/config.yaml"
+#        return 0
+#    fi
+
+  cat >> "$config_file" <<EOF
+debug: false
+listenport: nz_port
+language: nz_language
+sitename: "nz_site_title"
+installhost: nz_hostport
+tls: nz_tls
+oauth2:
+  GitHub:
+    clientid: "your_github_client_id"
+    clientsecret: "your_github_client_secret"
+    endpoint:
+      authurl: "https://github.com/login/oauth/authorize"
+      tokenurl: "https://github.com/login/oauth/access_token"
+    userinfourl: "https://api.github.com/user"
+    useridpath: "id"
+  Gitee:
+    clientid: "your_gitee_client_id"
+    clientsecret: "your_gitee_client_secret"
+    endpoint:
+      authurl: "https://gitee.com/oauth/authorize"
+      tokenurl: "https://gitee.com/oauth/token"
+    scopes:
+      - user_info
+    userinfourl: "https://gitee.com/api/v5/user"
+    useridpath: "id"
+EOF
 
     prompt_input "===> 请输入面板标题(如 TypeCodes Monitor): " "TypeCodes Monitor" nz_site_title
     prompt_input "===> 请输入面板访问端口(如 80):  " "" nz_port
-    prompt_input "===> 请输入面板设置的 GRPC 通信地址(例如 vfhky.serv00.net:8888)  " "" nz_hostport
+    prompt_input "===> 请输入面板设置的 GRPC 通信地址(例如 vfhky.serv00.net:8888)： " "" nz_hostport
     prompt_input "===> 启用针对 gRPC 端口的 SSL/TLS加密，无特殊情况请选择false-否 true-是: " "false" nz_tls
+    prompt_input "===> 是否开启 GitHub 登录： " "false" oauth2_github
+    if [[ "${oauth2_github}" =~ ^[Yy]$ ]]; then
+        prompt_input "===> 请输入 Github Client ID: " "" github_client_id
+        prompt_input "===> 请输入 Github Client Secret: " "" github_client_secret
+    fi
+    prompt_input "===> 是否开启 Gitee 登录： " "false" oauth2_gitee
+    if [[ "${oauth2_gitee}" =~ ^[Yy]$ ]]; then
+        prompt_input "===> 请输入 Gitee Client ID: " "" gitee_client_id
+        prompt_input "===> 请输入 Gitee Client Secret: " "" gitee_client_secret
+    fi
 
     #sed -i "s/nz_site_title/${nz_site_title}/" "${config_file}"
     sed -i '' "s/nz_site_title/${nz_site_title}/" "${config_file}"
-
     #sed -i "s/nz_port/${nz_port}/" "${config_file}"
     sed -i '' "s/nz_port/${nz_port}/" "${config_file}"
-
     #sed -i "s/nz_hostport/${nz_hostport}/" "${config_file}"
     sed -i '' "s/nz_hostport/${nz_hostport}/" "${config_file}"
-
     #sed -i "s/nz_tls/${nz_tls}/" "${config_file}"
     sed -i '' "s/nz_tls/${nz_tls}/" "${config_file}"
-
     #sed -i "s/nz_language/zh_CN/" "${config_file}"
     sed -i '' "s/nz_language/zh_CN/" "${config_file}"
 
-    mkdir -p $NZ_DASHBOARD_PATH/data  2>/dev/null 
-    \mv -f "${config_file}" ${NZ_DASHBOARD_PATH}/data/config.yaml
-    if [ "$IS_DOCKER_NEZHA" = 1 ]; then
-        mv -f /tmp/nezha-docker-compose.yaml ${NZ_DASHBOARD_PATH}/docker-compose.yaml
+    if [[ "${oauth2_github}" =~ ^[Yy]$ ]]; then
+        #sed -i "s/your_github_client_id/${github_client_id}/" "${config_file}"
+        sed -i '' "s/your_github_client_id/${github_client_id}/" "${config_file}"
+        #sed -i "s/your_github_client_secret/${github_client_secret}/" "${config_file}"
+        sed -i '' "s/your_github_client_secret/${github_client_secret}/" "${config_file}"
     fi
 
-    printf "===> 面板配置 ${green}修改成功 ${plain}\n"
+    if [[ "${oauth2_gitee}" =~ ^[Yy]$ ]]; then
+        #sed -i "s/your_gitee_client_id/${gitee_client_id}/" "${config_file}"
+        sed -i '' "s/your_gitee_client_id/${gitee_client_id}/" "${config_file}"
+        #sed -i "s/your_gitee_client_secret/${gitee_client_secret}/" "${config_file}"
+        sed -i '' "s/your_gitee_client_secret/${gitee_client_secret}/" "${config_file}"
+    fi
+
+    mkdir -p $NZ_DASHBOARD_PATH/data  2>/dev/null 
+    \mv -f "${config_file}" ${NZ_DASHBOARD_PATH}/data/config.yaml
+
+    printf "===> 面板配置修改成功\n"
 }
 
 download_dashboard() {

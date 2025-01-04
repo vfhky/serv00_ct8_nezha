@@ -92,6 +92,6 @@ s9.serv00.com|22|vhub|password
 
 9、升级哪吒探针V1版本开通Github、Gitee的OAuth2登录： [serv00和ct8上的哪吒探针V1开启Github和Gitee登录](https://typecodes.com/python/serv00ct8nezhav1githubgiteelogin.html)
 
-## 5 Trend
+## 5 Stars 趋势
 
-[![Star History Chart](https://api.star-history.com/svg?repos=vfhky/serv00_ct8_nezha&type=Date)](https://star-history.com/#vfhky/serv00_ct8_nezha&Date)
+<a href="https://github.com/vfhky/serv00_ct8_nezha/stargazers" target="_blank"><img src="./images/starcharts.svg" alt="Stargazers over time" /></a>

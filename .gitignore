@@ -27,3 +27,5 @@ sftp-config.json
 /log/
 *.bak
 *.conf
+
+images

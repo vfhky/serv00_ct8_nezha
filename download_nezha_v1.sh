@@ -186,12 +186,12 @@ EOF
     prompt_input "===> 请输入面板访问端口(如 80):  " "" nz_port
     prompt_input "===> 请输入面板设置的 GRPC 通信地址(例如 vfhky.serv00.net:8888)： " "" nz_hostport
     prompt_input "===> 启用针对 gRPC 端口的 SSL/TLS加密，无特殊情况请选择false-否 true-是: " "false" nz_tls
-    prompt_input "===> 是否开启 GitHub 登录： " "false" oauth2_github
+    prompt_input "===> 是否开启 GitHub 登录(y-是 n-否)： " "y" oauth2_github
     if [[ "${oauth2_github}" =~ ^[Yy]$ ]]; then
         prompt_input "===> 请输入 Github Client ID: " "" github_client_id
         prompt_input "===> 请输入 Github Client Secret: " "" github_client_secret
     fi
-    prompt_input "===> 是否开启 Gitee 登录： " "false" oauth2_gitee
+    prompt_input "===> 是否开启 Gitee 登录(y-是 n-否)： " "y" oauth2_gitee
     if [[ "${oauth2_gitee}" =~ ^[Yy]$ ]]; then
         prompt_input "===> 请输入 Gitee Client ID: " "" gitee_client_id
         prompt_input "===> 请输入 Gitee Client Secret: " "" gitee_client_secret

@@ -50,7 +50,7 @@ s9.serv00.com|22|vhub|password
 
 #### 3.2 系统常量模板 sys.eg
 
-这个是系统配置文件，可以通过修改相关菜单，可以开启企业微信机器人、企业微信app应用、tg、pushPlus、七牛云备份等功能。
+这个是系统配置文件，通过修改相关菜单可以开启企业微信机器人、企业微信app应用、tg、pushPlus、七牛云备份等功能。
 
 #### 3.3 进程监控模板 monitor.eg
 
@@ -89,3 +89,5 @@ s9.serv00.com|22|vhub|password
 7、修复项目中哪吒面板不显示主机区域的问题： [《serv00和ct8主机一键安装哪吒探针和多主机保活(六)》](https://typecodes.com/python/serv00ct8nezha6.html)
 
 8、一键安装哪吒探针V1版本： [serv00和ct8主机一键安装哪吒探针V1版本和多主机保活](https://typecodes.com/python/serv00ct8nezhav1.html)
+
+9、升级哪吒探针V1版本开通Github、Gitee的OAuth2登录： [serv00和ct8上的哪吒探针V1开启Github和Gitee登录](https://typecodes.com/python/serv00ct8nezhav1githubgiteelogin.html)

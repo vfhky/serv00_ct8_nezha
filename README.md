@@ -91,3 +91,7 @@ s9.serv00.com|22|vhub|password
 8、一键安装哪吒探针V1版本： [serv00和ct8主机一键安装哪吒探针V1版本和多主机保活](https://typecodes.com/python/serv00ct8nezhav1.html)
 
 9、升级哪吒探针V1版本开通Github、Gitee的OAuth2登录： [serv00和ct8上的哪吒探针V1开启Github和Gitee登录](https://typecodes.com/python/serv00ct8nezhav1githubgiteelogin.html)
+
+## 5 Trend
+
+[![Star History Chart](https://api.star-history.com/svg?repos=vfhky/serv00_ct8_nezha&type=Date)](https://star-history.com/#vfhky/serv00_ct8_nezha&Date)

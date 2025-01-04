@@ -144,7 +144,18 @@ prompt_input() {
 }
 
 modify_dashboard_config() {
+    # 1-先备份 0-不备份
+    local need_backup=$1
+
     echo "> 修改面板配置"
+    if [[ 1 == "${need_backup}" ]]; then
+      local config_file="${NZ_DASHBOARD_PATH}/data/config.yaml"
+      if [[ -f "${config_file}" ]]; then
+          local config_file_bak="${config_file}.$(date +%Y_%m_%d_%H_%M)"
+          \cp -f "${config_file}" "${config_file_bak}"
+          echo "====> 已经备份dashboard的配置文件[${config_file}] 到 ${config_file_bak}"
+      fi
+    fi
 
     local config_file="${NZ_DASHBOARD_PATH}/nezha-config.yaml"
 
@@ -183,15 +194,15 @@ oauth2:
 EOF
 
     prompt_input "===> 请输入面板标题(如 TypeCodes Monitor): " "TypeCodes Monitor" nz_site_title
-    prompt_input "===> 请输入面板访问端口(如 80):  " "" nz_port
-    prompt_input "===> 请输入面板设置的 GRPC 通信地址(例如 vfhky.serv00.net:8888)： " "" nz_hostport
+    prompt_input "===> 请输入面板访问端口(如 80): " "" nz_port
+    prompt_input "===> 请输入面板设置的 GRPC 通信地址(例如 vfhky.serv00.net:8888): " "" nz_hostport
     prompt_input "===> 启用针对 gRPC 端口的 SSL/TLS加密，无特殊情况请选择false-否 true-是: " "false" nz_tls
-    prompt_input "===> 是否开启 GitHub 登录(y-是 n-否)： " "y" oauth2_github
+    prompt_input "===> 是否开启 GitHub 登录(y-是 n-否): " "y" oauth2_github
     if [[ "${oauth2_github}" =~ ^[Yy]$ ]]; then
         prompt_input "===> 请输入 Github Client ID: " "" github_client_id
         prompt_input "===> 请输入 Github Client Secret: " "" github_client_secret
     fi
-    prompt_input "===> 是否开启 Gitee 登录(y-是 n-否)： " "y" oauth2_gitee
+    prompt_input "===> 是否开启 Gitee 登录(y-是 n-否): " "y" oauth2_gitee
     if [[ "${oauth2_gitee}" =~ ^[Yy]$ ]]; then
         prompt_input "===> 请输入 Gitee Client ID: " "" gitee_client_id
         prompt_input "===> 请输入 Gitee Client Secret: " "" gitee_client_secret
@@ -272,7 +283,7 @@ download_dashboard() {
     local config_file="${NZ_DASHBOARD_PATH}/data/config.yaml"
     local config_file_bak=''
     if [[ -f "${config_file}" ]]; then
-        local config_file_bak="${config_file}.$(date +%Y_%m_%d_%H_%M)"
+        config_file_bak="${config_file}.$(date +%Y_%m_%d_%H_%M)"
         \cp -f "${config_file}" "${config_file_bak}"
         echo "====> 已经备份dashboard的配置文件[${config_file}] 到 ${config_file_bak}"
     fi
@@ -293,11 +304,11 @@ download_dashboard() {
             echo "===> [dashboard] 已经成功使用旧的配置数据 ${config_file}"
         else
             echo "===> [dashboard] 准备输入新的配置数据"
-            modify_dashboard_config
+            modify_dashboard_config 0
         fi
     else
         echo "===> [dashboard] 准备输入新的配置数据"
-        modify_dashboard_config
+        modify_dashboard_config 0
     fi
 }
 
@@ -347,16 +358,24 @@ download_agent() {
 }
 
 gen_agent_config() {
-  local file_path="$1"
+  local agent_config_file="$1"
+  # 1-需要备份 0-不需要备份
+  local need_backup=$2
 
-  if [ -z "$file_path" ]; then
+  if [ -z "${agent_config_file}" ]; then
     echo "File path is required."
     return 1
   fi
 
-  \rm -rf "$file_path"
+  if [[ 1 == "${need_backup}" ]]; then
+      local agent_config_file_bak="${agent_config_file}.$(date +%Y_%m_%d_%H_%M)"
+      \cp -f "${agent_config_file}" "${agent_config_file_bak}"
+      echo "====> 已经备份agent的配置文件[${agent_config_file}] 到 ${agent_config_file_bak}"
+  fi
 
-  cat > "$file_path" <<EOF
+  \rm -rf "${agent_config_file}"
+
+  cat > "${agent_config_file}" <<EOF
 client_secret: your_agent_secret
 debug: false
 disable_auto_update: false
@@ -380,20 +399,20 @@ EOF
 
 prompt_input "===> 请输入面板配置文件中的密钥agentsecretkey: " "" your_agent_secret
 prompt_input "===> 启用针对 gRPC 端口的 SSL/TLS加密，无特殊情况请选择false-否 true-是: " "false" your_tls
-prompt_input "===> 请输入面板设置的 GRPC 通信地址(例如 vfhky.serv00.net:8888):  " "" your_dashboard_ip_port
+prompt_input "===> 请输入面板设置的 GRPC 通信地址(例如 vfhky.serv00.net:8888): " "" your_dashboard_ip_port
 your_uuid=$(uuidgen)
 
-#sed -i "s/your_agent_secret/${your_agent_secret}/" "$file_path"
-sed -i '' "s/your_agent_secret/${your_agent_secret}/" "$file_path"
+#sed -i "s/your_agent_secret/${your_agent_secret}/" "${agent_config_file}"
+sed -i '' "s/your_agent_secret/${your_agent_secret}/" "${}agent_config_file}"
 
-#sed -i "s/your_tls/${your_tls}/g" "$file_path"
-sed -i '' "s/your_tls/${your_tls}/g" "$file_path"
+#sed -i "s/your_tls/${your_tls}/g" "${agent_config_file}"
+sed -i '' "s/your_tls/${your_tls}/g" "${}agent_config_file}"
 
-#sed -i "s/your_dashboard_ip_port/${your_dashboard_ip_port}/" "$file_path"
-sed -i '' "s/your_dashboard_ip_port/${your_dashboard_ip_port}/" "$file_path"
+#sed -i "s/your_dashboard_ip_port/${your_dashboard_ip_port}/" "${agent_config_file}"
+sed -i '' "s/your_dashboard_ip_port/${your_dashboard_ip_port}/" "${}agent_config_file}"
 
-#sed -i "s/your_uuid/${your_uuid}/" "$file_path"
-sed -i '' "s/your_uuid/${your_uuid}/" "$file_path"
+#sed -i "s/your_uuid/${your_uuid}/" "${agent_config_file}"
+sed -i '' "s/your_uuid/${your_uuid}/" "${}agent_config_file}"
 }
 
 gen_agent_run_sh() {
@@ -416,7 +435,7 @@ gen_agent_run_sh() {
         echo "===> [agent] 准备输入新的配置数据"
     fi
 
-    gen_agent_config "${config_file}"
+    gen_agent_config "${config_file}" 0
 
     cat <<EOF > "${agent_run_sh}"
 #!/bin/bash
@@ -444,7 +463,7 @@ modify_config() {
         fi
 
         echo "====> 准备开始修改dashboard配置文件[${NZ_DASHBOARD_CONFIG_FILE}]"
-        modify_dashboard_config
+        modify_dashboard_config 1
 
         dashboard_pid=$(pgrep -f nezha-dashboard)
         if [[ -n "$dashboard_pid" ]]; then
@@ -463,10 +482,7 @@ modify_config() {
         fi
 
         echo "====> 准备开始修改agent配置文件[${agent_config_file}]"
-
-        local agent_config_file_bak="${agent_config_file}.$(date +%Y_%m_%d_%H_%M)"
-        \cp -f "${agent_config_file}" "${agent_config_file_bak}"
-        gen_agent_config "${agent_config_file}"
+        gen_agent_config "${agent_config_file}" 1
 
         agent_pid=$(pgrep -f nezha-agent)
         if [[ -n "$agent_pid" ]]; then

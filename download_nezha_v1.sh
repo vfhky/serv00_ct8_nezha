@@ -453,7 +453,7 @@ modify_config() {
     pre_check
     NZ_APP_PATH=$1
 
-    prompt_input "===> 是否修改dashboard配置: " "N" modify
+    prompt_input "===> 是否修改dashboard配置(Y/y 是，N/n 否): " "N" modify
     if [[ "${modify}" =~ ^[Yy]$ ]]; then
         NZ_DASHBOARD_PATH="${NZ_APP_PATH}/dashboard"
         NZ_DASHBOARD_CONFIG_FILE="${NZ_DASHBOARD_PATH}/data/config.yaml"
@@ -472,7 +472,7 @@ modify_config() {
         fi
     fi
 
-    prompt_input "===> 是否修改agent配置: " "N" modify
+    prompt_input "===> 是否修改agent配置(Y/y 是，N/n 否): " "N" modify
     if [[ "${modify}" =~ ^[Yy]$ ]]; then
         NZ_AGENT_PATH="${NZ_APP_PATH}/agent"
         agent_config_file="${NZ_AGENT_PATH}/config.yml"

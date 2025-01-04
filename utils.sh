@@ -164,6 +164,7 @@ modify_config() {
     fi
 
     # 启动进程
+    echo "==> 修改完毕，开始重启探针进程"
     "${heart_beat_entry_sh}"
 }
 

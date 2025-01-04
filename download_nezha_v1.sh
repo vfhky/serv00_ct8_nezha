@@ -165,7 +165,7 @@ modify_dashboard_config() {
 #        return 0
 #    fi
 
-  cat >> "$config_file" <<EOF
+  cat > "$config_file" <<EOF
 debug: false
 listenport: nz_port
 language: nz_language

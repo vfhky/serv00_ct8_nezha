@@ -192,11 +192,9 @@ restore() {
 }
 
 init_all() {
-    echo "===> 开始初始化所有配置"
     init_vim
     alias_ll
     add_x_to_script
-    echo "===> 结束初始化所有配置"
 }
 
 gen_monitor_config() {

@@ -130,7 +130,7 @@ def prompt_user_input(msg):
     valid_inputs = {'y', 'n'}
     
     while True:
-        user_input = input(f"是否{msg}? (Y/y 执行，N/n 不执行): ").strip().lower()
+        user_input = input(f"是否{msg}? (Y/y 是，N/n 否): ").strip().lower()
         
         if user_input in valid_inputs:
             return user_input == 'y'

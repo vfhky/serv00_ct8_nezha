@@ -110,23 +110,23 @@ def main():
         gen_ed25519(utils_sh_file, ssh_dir)
 
     # 初始化配置并连接所有主机
-    print("===> 开始读取host.conf主机配置文件....")
+    print("===> 开始连接host.conf中配置的相互保活的主机....")
     host_config = HostConfigEntry(host_config_file, private_key_file)
     config_entries = host_config.get_entries()
 
     # sshd公私钥文件拷贝
-    if utils.prompt_user_input("拷贝公私钥文件到各个主机(一般是安装面板需要生成，安装agent时不需要)"):
+    if utils.prompt_user_input("拷贝公私钥到相互保活的主机(一般是首次安装面板才需要)"):
         transfer_ssh_dir_to_all_hosts(config_entries, host_name, user_name, ssh_dir)
 
     if utils.prompt_user_input("选择安装哪吒V1版本？(V1和V0完全不兼容，请确认)"):
+        install_ver = "V1"
         download_nezha_sh = utils.get_serv00_dir_file(serv00_ct8_dir, 'download_nezha_v1.sh')
-        print("===> 您选择安装哪吒V1版本。")
     else:
+        install_ver = "V0"
         download_nezha_sh = utils.get_serv00_dir_file(serv00_ct8_dir, 'download_nezha.sh')
-        print("===> 您选择安装哪吒V0版本。")
 
-    if utils.prompt_user_input("开始安装哪吒dashboard"):
-        print("===> 开始安装哪吒dashboard....")
+    if utils.prompt_user_input(f"安装【{install_ver}】版本的dashboard面板"):
+        print(f"===> 开始安装dashboard....")
         if not utils.run_shell_script_with_os(download_nezha_sh, "dashboard", dashboard_dir):
             print("===> 安装失败，请稍后再重试....")
             sys.exit(1)
@@ -140,8 +140,8 @@ def main():
         sleep(2)
         utils.run_shell_script_with_os(utils_sh_file, "show_agent_key", utils.get_dashboard_config_file(user_name))
 
-    if utils.prompt_user_input("开始安装哪吒agent"):
-        print("===> 开始安装哪吒agent....")
+    if utils.prompt_user_input(f"安装【{install_ver}】版本的agent"):
+        print(f"===> 开始安装agent....")
         if not utils.run_shell_script_with_os(download_nezha_sh, "agent", agent_dir):
             print("===> 安装失败，请稍后再重试....")
             sys.exit(1)
@@ -153,7 +153,7 @@ def main():
     # 生成所有主机的保活配置
     gen_all_hosts_heart_beat_config(utils_sh_file, heart_beat_config_file, config_entries, host_name, user_name)
 
-    print("=======> 安装结束....")
+    print("=======> 安装结束")
 
 
 if __name__ == '__main__':

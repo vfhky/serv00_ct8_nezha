@@ -350,7 +350,7 @@ download_agent() {
     mkdir -p $NZ_AGENT_PATH  2>/dev/null
     unzip -qo nezha-agent_linux_${os_arch}.zip &&
         \mv -f nezha-agent $NZ_AGENT_PATH &&
-        rm -rf nezha-agent_linux_${os_arch}.zip README.md
+        rm -rf nezha-agent_linux_${os_arch}.zip
 
     echo "===> Agent ${NZ_AGENT_URL} 下载完成"
 

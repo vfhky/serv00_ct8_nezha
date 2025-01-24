@@ -4,22 +4,22 @@ serv00和ct8主机一键安装哪吒探针和多主机保活
 ## 1 背景
 基于`serv00`和`ct8`这种配置较低的主机，比较适合用来做探针。目前还没发现能自动安装哪吒探针面板和agent客户端的脚本，以及多主机相互保活、探针进程保活等，所以写了这个项目。
 
-哪吒v0版本的效果体验：[https://monitor1.typecodes.us.kg](https://monitor1.typecodes.us.kg) 。
+哪吒探针v0版本的效果体验：[https://monitor1.typecodes.us.kg](https://monitor1.typecodes.us.kg) 。
 
-哪吒v1版本的效果体验：[https://monitor2.typecodes.us.kg](https://monitor2.typecodes.us.kg) 。
+哪吒探针v1版本的效果体验：[https://monitor2.typecodes.us.kg](https://monitor2.typecodes.us.kg) 。
 
 
 ## 2 特点
 
 ```
-1、支持一键分别安装最新v1或者v0版本的哪吒探针dashboard和agent客户端，无需复杂操作；
-2、弃用PM2，通过自动生成crontab，实现了探针进程监控保活以及主机间相互保活；
-3、当某个主机探针进程掉线时，本机或者其它保活的主机都能自动重新拉起本机探针进程；
-4、多个主机之间的通信，使用ssh公私钥，无需暴露主机密码；
-5、对于单serv00主机，支持通过 青龙面板 或者其它云主机对单个serv00/ct8主机进行进程监控和保活；
-6、支持自定义进程保活，例如自己写的任何一个进程服务，可以在monitor.conf配置文件中简单配置即可；
-7、支持企业微信机器人、企业微信app应用、tg、pushPlus等监控通知；
-8、支持七牛、腾讯云cos、阿里云oss云存储备份哪吒面板数据库。
+1、【   简单   】：支持一键安装最新v1或者v0版本的哪吒探针dashboard或者agent客户端；
+2、【 自动保活 】：弃用PM2，通过自动生成crontab，实现了探针进程监控保活以及主机间相互保活；
+3、【 自动保活 】：当某个主机探针进程掉线时，本机或者其它保活的主机都能自动重新拉起本机探针进程；
+4、【 外部保活 】：对于单台serv00/ct8主机，也可以通过 青龙面板 或者其它云主机对它进行探针进程监控和保活；
+5、【  扩展性  】：支持保活自定义的进程，例如自己写的任何一个进程服务，可以在monitor.conf配置文件中简单配置即可；
+6、【  SSH安全 】：多主机之间使用ssh公私钥进行通信保活，不会暴露主机密码；
+7、【 重要通知 】：支持企业微信机器人、企业微信app应用、tg、pushPlus等重要域名进行监控和通知；
+8、【数据库安全】：支持七牛、腾讯云cos、阿里云oss云存储备份哪吒面板数据库。
 ```
 
 
@@ -28,7 +28,7 @@ serv00和ct8主机一键安装哪吒探针和多主机保活
 ```
 1、下载脚本: git clone https://github.com/vfhky/serv00_ct8_nezha.git
 2、进入项目: cd serv00_ct8_nezha
-3、修改配置（非必须的操作）: vim config/host.eg
+3、追加其它保活主机（非必须的操作）: vim config/host.eg
 4、开始安装: python3 main.py 。
 ```
 
@@ -43,9 +43,10 @@ serv00和ct8主机一键安装哪吒探针和多主机保活
 
 假如你只有一台serv00/ct8机器，那么就不需要修改（可以借助青龙面板等外部定时任务来保活）。
 
-当你有多台serv00/ct8，那么通过这个配置实现多主机相互保活。例如用当前serv00/ct8主机和另外一个s9的serv00机器(用户名是vhub)做相互保活，那么在文件中追加如下配置即可：
+当你有多台serv00/ct8，那么通过这个配置实现多主机相互保活。例如用当前serv00/ct8主机和另外一个s9的serv00机器(用户名是vhub)做相互保活，那么在文件中追加s9的配置即可：
 
 ```
+# hostname|port|username|password
 s9.serv00.com|22|vhub|password
 ```
 

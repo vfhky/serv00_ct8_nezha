@@ -195,7 +195,9 @@ EOF
 
     prompt_input "===> 请输入面板标题(如 TypeCodes Monitor): " "TypeCodes Monitor" nz_site_title
     prompt_input "===> 请输入面板访问端口(如 80): " "" nz_port
-    prompt_input "===> 请输入面板设置的 GRPC 通信地址(例如 vfhky.serv00.net:8888): " "" nz_hostport
+    local user_name=$(whoami)
+    local grpc_prompt="===> 请输入面板设置的 GRPC 通信地址(例如${user_name}.serv00.net:${nz_port}): "
+    prompt_input "${grpc_prompt}" "" nz_hostport
     prompt_input "===> 启用针对 gRPC 端口的 SSL/TLS加密，无特殊情况请选择false-否 true-是: " "false" nz_tls
     prompt_input "===> 是否开启 GitHub 登录(y-是 n-否): " "y" oauth2_github
     if [[ "${oauth2_github}" =~ ^[Yy]$ ]]; then

@@ -283,7 +283,7 @@ download_agent() {
 
     NZ_AGENT_PATH=$1
 
-    local version='v1.5.2'
+    local version='v0.20.5'
 
     if [ ! -n "$version" ]; then
         err "获取版本号失败，请检查本机能否链接 https://api.github.com/repos/nezhahq/agent/releases/latest"

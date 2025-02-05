@@ -87,23 +87,32 @@ s9.serv00.com|22|vhub|password
 
 以下是`安装哪吒探针`、`探针进程监控保活`、`多主机保活原理`、`面板sqlite.db备份`等功能的文档，方便大家参考查阅：
 
+#### 4.1 详细安装过程
+
 1、常规手工安装哪吒探针V0版本： 包括如何server00开启应用、TCP端口、申请github的token等等，[《在serv00主机上安装哪吒探针》](https://typecodes.com/linux/server00installnezha.html)
 
 2、一键安装哪吒探针V0版本： [《serv00和ct8主机一键安装哪吒探针和多主机保活》](https://typecodes.com/python/serv00ct8nezha.html)
 
-3、架构说明（含保活原理等）： [《serv00和ct8主机一键安装哪吒探针和多主机保活(二)》](https://typecodes.com/python/serv00ct8nezha2.html)
+3、一键安装哪吒探针V1版本： [serv00和ct8主机一键安装哪吒探针V1版本和多主机保活](https://typecodes.com/python/serv00ct8nezhav1.html)
 
-4、使用青龙面板对单台serv00保活： [《serv00和ct8主机一键安装哪吒探针和多主机保活(三)》](https://typecodes.com/python/serv00ct8nezha3.html)
+4、升级哪吒探针V1版本开通Github、Gitee的OAuth2登录： [serv00和ct8上的哪吒探针V1开启Github和Gitee登录](https://typecodes.com/python/serv00ct8nezhav1githubgiteelogin.html)
 
-5、utils.sh 强大的serv00脚本工具： [《serv00和ct8主机一键安装哪吒探针和多主机保活(四)》](https://typecodes.com/python/serv00ct8nezha4.html)
+#### 4.2 其它功能
 
-6、使用七牛、腾讯云cos、阿里云oss云存储备份哪吒面板数据库： [《serv00和ct8主机一键安装哪吒探针和多主机保活(五)》](https://typecodes.com/python/serv00ct8nezha5.html)
+1、使用七牛、腾讯云cos、阿里云oss云存储备份哪吒面板数据库： [《serv00和ct8主机一键安装哪吒探针和多主机保活(五)》](https://typecodes.com/python/serv00ct8nezha5.html)
 
-7、修复项目中哪吒面板不显示主机区域的问题： [《serv00和ct8主机一键安装哪吒探针和多主机保活(六)》](https://typecodes.com/python/serv00ct8nezha6.html)
+2、使用青龙面板对单台serv00保活： [《serv00和ct8主机一键安装哪吒探针和多主机保活(三)》](https://typecodes.com/python/serv00ct8nezha3.html)
 
-8、一键安装哪吒探针V1版本： [serv00和ct8主机一键安装哪吒探针V1版本和多主机保活](https://typecodes.com/python/serv00ct8nezhav1.html)
+3、utils.sh 强大的serv00脚本工具： [《serv00和ct8主机一键安装哪吒探针和多主机保活(四)》](https://typecodes.com/python/serv00ct8nezha4.html)
 
-9、升级哪吒探针V1版本开通Github、Gitee的OAuth2登录： [serv00和ct8上的哪吒探针V1开启Github和Gitee登录](https://typecodes.com/python/serv00ct8nezhav1githubgiteelogin.html)
+
+#### 4.3 架构原理
+
+1、哪吒探针dashboard面板FreeBSD二进制安装包构建：[https://github.com/vfhky/nezha-build](https://github.com/vfhky/nezha-build)
+
+2、架构说明（含保活原理等）： [《serv00和ct8主机一键安装哪吒探针和多主机保活(二)》](https://typecodes.com/python/serv00ct8nezha2.html)
+
+3、修复项目中哪吒面板不显示主机区域的问题： [《serv00和ct8主机一键安装哪吒探针和多主机保活(六)》](https://typecodes.com/python/serv00ct8nezha6.html)
 
 
 ## 5 Stars 趋势

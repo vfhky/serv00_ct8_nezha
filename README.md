@@ -1,5 +1,16 @@
-serv00和ct8主机一键安装哪吒探针和多主机保活
-======================================================
+# serv00和ct8主机一键安装哪吒探针和多主机保活
+
+![构建哪吒探针FreeBSD二进制安装包](https://github.com/nezhahq/nezha/raw/master/.github/brand.svg)
+
+
+![Os][os-shield]
+[![Release][release-shield]][forks-url]
+[![Forks][forks-shield]][forks-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
+[![Contributors][contributors-shield]][contributors-url]
+[![License][license-shield]][license-url]
+
 
 ## 1 背景
 基于`serv00`和`ct8`这种配置较低的主机，比较适合用来做探针。目前还没发现能自动安装哪吒探针面板和agent客户端的脚本，以及多主机相互保活、探针进程保活等，所以写了这个项目。
@@ -98,3 +109,19 @@ s9.serv00.com|22|vhub|password
 ## 5 Stars 趋势
 
 [![Star History Chart](https://api.star-history.com/svg?repos=vfhky/serv00_ct8_nezha&type=Date)](https://star-history.com/#vfhky/serv00_ct8_nezha&Date)
+
+
+<!-- links -->
+[os-shield]: https://img.shields.io/badge/FreeBSD-blue
+[release-shield]: https://img.shields.io/github/v/release/vfhky/serv00_ct8_nezha
+[release-url]: https://github.com/vfhky/serv00_ct8_nezha/releases
+[contributors-shield]: https://img.shields.io/github/contributors/vfhky/serv00_ct8_nezha
+[contributors-url]: https://github.com/vfhky/serv00_ct8_nezha/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/vfhky/serv00_ct8_nezha?style=flat
+[forks-url]: https://github.com/vfhky/serv00_ct8_nezha/network/members
+[stars-shield]: https://img.shields.io/github/stars/vfhky/serv00_ct8_nezha?style=flat
+[stars-url]: https://github.com/vfhky/serv00_ct8_nezha/stargazers
+[issues-shield]: https://img.shields.io/github/issues/vfhky/serv00_ct8_nezha
+[issues-url]: https://github.com/vfhky/serv00_ct8_nezha/issues
+[license-shield]: https://img.shields.io/github/license/vfhky/serv00_ct8_nezha
+[license-url]: https://github.com/vfhky/serv00_ct8_nezha/blob/master/LICENSE?color=blue

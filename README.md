@@ -39,7 +39,7 @@
 ```
 1、下载项目: git clone https://github.com/vfhky/serv00_ct8_nezha.git
 2、进入项目: cd serv00_ct8_nezha
-3、追加保活主机（非必须的操作）: vim config/host.eg
+3、追加其它保活主机（非必须的操作）: vim config/host.eg
 4、开始安装: python3 main.py 。
 ```
 
@@ -110,9 +110,11 @@ s9.serv00.com|22|vhub|password
 
 1、哪吒探针dashboard面板FreeBSD二进制安装包构建：[https://github.com/vfhky/nezha-build](https://github.com/vfhky/nezha-build)
 
-2、架构说明（含保活原理等）： [《serv00和ct8主机一键安装哪吒探针和多主机保活(二)》](https://typecodes.com/python/serv00ct8nezha2.html)
+2、探针面板安装包：[《github workflow构建哪吒探针FreeBSD安装包》](https://typecodes.com/linux/githubworkflownezhafreebsdserv00.html)
 
-3、修复项目中哪吒面板不显示主机区域的问题： [《serv00和ct8主机一键安装哪吒探针和多主机保活(六)》](https://typecodes.com/python/serv00ct8nezha6.html)
+3、架构说明（含保活原理等）： [《serv00和ct8主机一键安装哪吒探针和多主机保活(二)》](https://typecodes.com/python/serv00ct8nezha2.html)
+
+4、修复项目中哪吒面板不显示主机区域的问题： [《serv00和ct8主机一键安装哪吒探针和多主机保活(六)》](https://typecodes.com/python/serv00ct8nezha6.html)
 
 
 ## 5 Stars 趋势

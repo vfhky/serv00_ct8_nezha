@@ -287,15 +287,16 @@ download_agent() {
 
 
     local download_url="https://github.com/nezhahq/agent/releases/download/${version}/nezha-agent_${os_type}_${os_arch}.zip"
-    if ! wget -t 2 -T 60 -qO "nezha-agent_${os_type}_${os_arch}.zip" "$download_url"; then
+    local agent_file="nnezha-agent_linux_${os_arch}.zip"
+    if ! wget -t 2 -T 60 -qO "${agent_file}" "$download_url"; then
         err "===> [agent] ${download_url} 下载失败，请检查是否能正常访问"
         return 1
     fi
 
     mkdir -p $install_path  2>/dev/null
-    unzip -qo nezha-agent_linux_${os_arch}.zip &&
+    unzip -qo "${agent_file}" &&
         \mv -f nezha-agent $install_path &&
-        rm -rf nezha-agent_linux_${os_arch}.zip
+        rm -rf "${agent_file}"
 
     info "===> [agent] ${download_url} 下载完成"
 

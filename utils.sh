@@ -344,11 +344,11 @@ show_agent_key() {
     fi
 
     local dashboard_config_file="$1"
-    local agent_secret_key=$(grep -E '^agentsecretkey:' "$dashboard_config_file" | awk -F ': ' '{print $2}' | sed 's/^\\s*//;s/\\s*$//')
+    local agent_secret_key=$(grep -E '^[[:space:]]*(agent_secret_key|agentsecretkey)[[:space:]]*:' "$dashboard_config_file"  | awk -F ': ' '{print $2}' | sed 's/^\\s*//;s/\\s*$//')
     if [[ -n "$agent_secret_key" ]]; then
         echo "====> 已经找到用于agent连接的密钥: $agent_secret_key"
     else
-        echo "====> 未找到用于agent连接的密钥, 请手工执行命令获取: grep agentsecretkey $dashboard_config_file"
+        echo "====> 未找到用于agent连接的密钥, 请手工执行命令获取: grep -E "(agent_secret_key|agentsecretkey)" $dashboard_config_file"
     fi
 }
 

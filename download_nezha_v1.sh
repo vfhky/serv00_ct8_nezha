@@ -5,9 +5,9 @@ log() {
     local level=$1
     shift
     case "$level" in
-        "error") printf "\033[0;31m[错误] %s\033[0m\n" "$*" >&2 ;;
-        "warn") printf "\033[0;33m[警告] %s\033[0m\n" "$*" ;;
-        "info") printf "\033[0;32m[信息] %s\033[0m\n" "$*" ;;
+        "error") printf "\033[0;31m%s\033[0m\n" "$*" >&2 ;;
+        "warn") printf "\033[0;33m%s\033[0m\n" "$*" ;;
+        "info") printf "\033[0;32m%s\033[0m\n" "$*" ;;
         *) printf "%s\n" "$*" ;;
     esac
 }
@@ -238,7 +238,7 @@ download_dashboard() {
     echo "v=${version_num}" > "${install_path}/version.txt"
     \rm -rf "${install_path}"/app.zip
 
-    if [[ -f "${config_file_bak}" ]]; then
+    if [[ -f "${config_backup}" ]]; then
         prompt_input "===> 是否继续使用旧的配置数据(Y/y 是，N/n 否): " "" modify
         if [[ "${modify}" =~ ^[Yy]$ ]]; then
             echo "===> [dashboard] 准备修改配置文件"

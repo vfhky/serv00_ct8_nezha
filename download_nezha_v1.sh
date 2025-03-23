@@ -42,7 +42,7 @@ prompt_input() {
     local input_variable_name=$3
 
     while true; do
-        printf "%s" "$prompt_message"
+        info "$prompt_message"
         read -r input_value
 
         if [ -n "$input_value" ]; then

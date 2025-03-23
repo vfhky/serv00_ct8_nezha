@@ -223,9 +223,8 @@ download_dashboard() {
     info "===> [dashboard] ${download_url} 下载完成"
 
     local config_file="${install_path}/data/config.yaml"
-    local config_backup=""
     if [ -f "$config_file" ]; then
-        config_backup=$(backup_config "$config_file" "Dashboard配置")
+        backup_config "$config_file" "Dashboard配置"
     fi
 
     if ! unzip -oqq "${install_path}/app.zip" -d "$install_path"; then
@@ -239,7 +238,7 @@ download_dashboard() {
 
     if [[ -f "${config_file}" ]]; then
         prompt_input "===> 是否继续使用旧的配置数据(Y/y 是，N/n 否): " "" modify
-        if [[ "${modify}" =~ ^[Yy]$ ]]; then
+        if [[ ! "${modify}" =~ ^[Yy]$ ]]; then
             info "===> [dashboard] 准备修改配置文件"
             generate_dashboard_config "$install_path" 0
         fi
@@ -355,7 +354,6 @@ nohup ${agent_path}/nezha-agent \\
 EOF
 
     chmod +x "${agent_path}/nezha-agent.sh"
-    info "Agent 启动脚本生成成功: ${agent_path}/nezha-agent.sh"
 }
 
 # 修改配置

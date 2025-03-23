@@ -75,7 +75,6 @@ backup_config() {
         local backup_path="${file_path}.$(date +%Y_%m_%d_%H_%M)"
         if cp -f "$file_path" "$backup_path"; then
             info "====> 已备份${file_type}文件到 ${backup_path}"
-            echo "$backup_path"
         else
             err "备份${file_type}文件失败"
             return 1
@@ -238,14 +237,14 @@ download_dashboard() {
     echo "v=${version_num}" > "${install_path}/version.txt"
     \rm -rf "${install_path}"/app.zip
 
-    if [[ -f "${config_backup}" ]]; then
+    if [[ -f "${config_file}" ]]; then
         prompt_input "===> 是否继续使用旧的配置数据(Y/y 是，N/n 否): " "" modify
         if [[ "${modify}" =~ ^[Yy]$ ]]; then
-            echo "===> [dashboard] 准备修改配置文件"
+            info "===> [dashboard] 准备修改配置文件"
             generate_dashboard_config "$install_path" 0
         fi
     else
-        echo "===> [dashboard] 准备修改配置文件"
+        info "===> [dashboard] 准备修改配置文件"
         generate_dashboard_config "$install_path" 0
     fi
 }

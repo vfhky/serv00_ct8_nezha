@@ -237,96 +237,23 @@ download_dashboard() {
         return 1
     fi
 
-    # 如果有备份的配置文件，恢复它
-    if [ -n "$config_backup" ] && [ -f "$config_backup" ] && [[ ! "$modify_config" =~ ^[Yy]$ ]]; then
-        info "正在恢复原配置文件..."
-        mkdir -p "${install_path}/data"
-        cp -f "$config_backup" "$config_file"
-        info "配置文件已恢复"
-    fi
 
-    echo "v=${version}" > "${install_path}/version.txt"
-    rm -f "${install_path}/app.zip"
+    echo "v=${version_num}" > "${install_path}/version.txt"
+    \rm -rf "${install_path}"/app.zip
 
-    info "Dashboard 安装完成"
-    info "版本: v${version}"
-    info "安装路径: ${install_path}"
-}
-
-# 生成 Agent 配置
-generate_agent_config() {
-    local config_file=$1
-    local need_backup=$2
-
-    [ "$need_backup" = "1" ] && backup_config "$config_file" "Agent配置"
-
-    cat > "$config_file" <<EOF
-client_secret: your_agent_secret
-debug: false
-disable_auto_update: false
-disable_command_execute: false
-disable_force_update: false
-disable_nat: false
-disable_send_query: false
-gpu: false
-insecure_tls: your_tls
-ip_report_period: 1800
-report_delay: 1
-server: your_dashboard_ip_port
-skip_connection_count: false
-skip_procs_count: false
-temperature: false
-tls: your_tls
-use_gitee_to_upgrade: false
-use_ipv6_country_code: false
-uuid: your_uuid
-EOF
-
-    prompt_input "===> 请输入面板密钥: " "" agent_secret
-    prompt_input "===> 启用 SSL/TLS 加密(false-否 true-是): " "false" tls_enabled
-    prompt_input "===> 请输入面板通信地址: " "" dashboard_addr
-    local uuid=$(uuidgen 2>/dev/null || cat /proc/sys/kernel/random/uuid 2>/dev/null || echo "$(date +%s%N)")
-
-    local sed_cmd=$(get_sed_cmd)
-    $sed_cmd "
-        s/your_agent_secret/${agent_secret}/g;
-        s/your_tls/${tls_enabled}/g;
-        s/your_dashboard_ip_port/${dashboard_addr}/g;
-        s/your_uuid/${uuid}/g;
-    " "$config_file"
-
-    rm -f "${config_file}.bak"
-    info "Agent 配置生成成功: $config_file"
-}
-
-# 生成 Agent 运行脚本
-generate_agent_script() {
-    local agent_path=$1
-    local config_file="${agent_path}/config.yml"
-
-    if [ -f "$config_file" ]; then
-        prompt_input "是否使用现有配置(y/n): " "y" use_existing
-        if [[ ! "$use_existing" =~ ^[Yy]$ ]]; then
-            generate_agent_config "$config_file" 1
-        else
-            info "使用现有 Agent 配置: $config_file"
+    if [[ -f "${config_file_bak}" ]]; then
+        prompt_input "===> 是否继续使用旧的配置数据(Y/y 是，N/n 否): " "" modify
+        if [[ "${modify}" =~ ^[Yy]$ ]]; then
+            echo "===> [dashboard] 准备修改配置文件"
+            generate_dashboard_config "$install_path" 0
         fi
     else
-        generate_agent_config "$config_file" 0
+        echo "===> [dashboard] 准备修改配置文件"
+        generate_dashboard_config "$install_path" 0
     fi
-
-    cat > "${agent_path}/nezha-agent.sh" <<EOF
-#!/bin/bash
-nohup ${agent_path}/nezha-agent \\
-    -c ${config_file} \\
-    > /dev/null 2>&1 &
-EOF
-
-    chmod +x "${agent_path}/nezha-agent.sh"
-    info "Agent 启动脚本生成成功: ${agent_path}/nezha-agent.sh"
 }
 
-# 下载 Agent
+
 download_agent() {
     local install_path=$1
     local sys_info
@@ -373,6 +300,77 @@ download_agent() {
     info "安装路径: $install_path"
 
     generate_agent_script "$install_path"
+}
+
+generate_agent_config() {
+    local config_file=$1
+    local need_backup=$2
+
+    [ "$need_backup" = "1" ] && backup_config "$config_file" "Agent配置"
+
+    cat > "$config_file" <<EOF
+client_secret: your_agent_secret
+debug: false
+disable_auto_update: false
+disable_command_execute: false
+disable_force_update: false
+disable_nat: false
+disable_send_query: false
+gpu: false
+insecure_tls: your_tls
+ip_report_period: 1800
+report_delay: 1
+server: your_dashboard_ip_port
+skip_connection_count: false
+skip_procs_count: false
+temperature: false
+tls: your_tls
+use_gitee_to_upgrade: false
+use_ipv6_country_code: false
+uuid: your_uuid
+EOF
+
+    prompt_input "===> 请输入面板密钥: " "" agent_secret
+    prompt_input "===> 启用 SSL/TLS 加密(false-否 true-是，无特殊情况请选择false): " "false" tls_enabled
+    prompt_input "===> 请输入面板通信地址(如 $(whoami).serv00.net:12345): " "" dashboard_addr
+    local uuid=$(uuidgen 2>/dev/null || cat /proc/sys/kernel/random/uuid 2>/dev/null || echo "$(date +%s%N)")
+
+    local sed_cmd=$(get_sed_cmd)
+    $sed_cmd "
+        s/your_agent_secret/${agent_secret}/g;
+        s/your_tls/${tls_enabled}/g;
+        s/your_dashboard_ip_port/${dashboard_addr}/g;
+        s/your_uuid/${uuid}/g;
+    " "$config_file"
+
+    rm -f "${config_file}.bak"
+    info "Agent 配置生成成功: $config_file"
+}
+
+generate_agent_script() {
+    local agent_path=$1
+    local config_file="${agent_path}/config.yml"
+
+    if [ -f "$config_file" ]; then
+        prompt_input "===> [agent] 是否继续使用现有配置(y/n): " "y" use_existing
+        if [[ ! "$use_existing" =~ ^[Yy]$ ]]; then
+            generate_agent_config "$config_file" 1
+        else
+            info "===> [agent] 您选择继续使用旧的配置文件[${config_file}]"
+        fi
+    else
+        generate_agent_config "$config_file" 0
+    fi
+
+    cat > "${agent_path}/nezha-agent.sh" <<EOF
+#!/bin/bash
+nohup ${agent_path}/nezha-agent \\
+    -c ${config_file} \\
+    > /dev/null 2>&1 &
+EOF
+
+    chmod +x "${agent_path}/nezha-agent.sh"
+    info "Agent 启动脚本生成成功: ${agent_path}/nezha-agent.sh"
 }
 
 # 修改配置

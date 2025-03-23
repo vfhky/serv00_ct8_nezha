@@ -200,21 +200,18 @@ EOF
 download_dashboard() {
     local install_path=$1
 
-    # 获取最新版本
     local api_list=(
         "https://api.github.com/repos/vfhky/nezha-build/releases/latest"
         "https://ghapi.1024.cloudns.org?pj=vfhky/nezha-build"
         "https://fastly.jsdelivr.net/gh/vfhky/nezha-build/"
         "https://gcore.jsdelivr.net/gh/vfhky/nezha-build/"
     )
-
     local version=$(get_latest_version "vfhky\/nezha-build@" "${api_list[@]}")
     if [ -z "$version" ]; then
-        err "获取 Dashboard 版本号失败，请检查本机能否连接 ${array[0]}"
+        err "===> [dashboard] 获取版本号失败，请检查本机能否连接 ${array[0]}"
         return 1
     fi
-
-    info "当前最新版本为: $version"
+    info "===> [dashboard] 当前最新版本为: $version"
 
     mkdir -p "$install_path"
     local download_url="https://github.com/vfhky/nezha-build/releases/download/v${version}/nezha-dashboard.zip"
@@ -262,42 +259,33 @@ download_agent() {
 
     sys_info=$(get_system_info) || { err "获取系统信息失败"; exit 1; }
     IFS=':' read -r os_type os_arch <<< "$sys_info"
-    info "系统类型: $os_type, 架构: $os_arch"
 
-    version=$(get_latest_version "nezhahq/agent")
+    local api_list=(
+        "https://api.github.com/repos/nezhahq/agent/releases/latest"
+        "https://gitee.com/api/v5/repos/naibahq/agent/releases/latest"
+        "https://fastly.jsdelivr.net/gh/nezhahq/agent/"
+        "https://gcore.jsdelivr.net/gh/nezhahq/agent/"
+    )
+    local version=$(get_latest_version "nezhahq\/agent@" "${api_list[@]}")
     if [ -z "$version" ]; then
-        err "无法获取 Agent 版本"
+        err "===> [agent] 获取版本号失败，请检查本机能否连接 ${array[0]}"
         return 1
     fi
+    info "===> [agent] 当前最新版本为: $version"
 
-    info "最新版本: v${version}"
 
-    # 确定下载URL
-    local is_cn=$(check_location)
-    local download_url
-    if [ "$is_cn" = "true" ]; then
-        info "检测到中国大陆网络环境，使用 Gitee 镜像"
-        download_url="https://gitee.com/naibahq/agent/releases/download/v${version}/nezha-agent_${os_type}_${os_arch}.zip"
-    else
-        download_url="https://github.com/nezhahq/agent/releases/download/v${version}/nezha-agent_${os_type}_${os_arch}.zip"
-    fi
-
-    info "正在下载 Agent: $download_url"
+    local download_url="https://github.com/nezhahq/agent/releases/download/v${version}/nezha-agent_${os_type}_${os_arch}.zip"
     if ! wget -t 2 -T 60 -O "nezha-agent_${os_type}_${os_arch}.zip" "$download_url"; then
-        err "从以下地址下载 Agent 失败: $download_url"
+        err "===> [agent] ${download_url} 下载失败，请检查是否能正常访问"
         return 1
     fi
 
-    mkdir -p "$install_path"
-    info "正在解压 Agent..."
-    if ! unzip -qo "nezha-agent_${os_type}_${os_arch}.zip" && mv -f nezha-agent "$install_path"; then
-        err "解压或移动 Agent 失败"
-        return 1
-    fi
+    mkdir -p $install_path  2>/dev/null
+    unzip -qo nezha-agent_linux_${os_arch}.zip &&
+        \mv -f nezha-agent $install_path &&
+        rm -rf nezha-agent_linux_${os_arch}.zip
 
-    rm -f "nezha-agent_${os_type}_${os_arch}.zip"
-    info "Agent 下载成功，版本: v${version}"
-    info "安装路径: $install_path"
+    info "===> [agent] ${download_url} 下载完成"
 
     generate_agent_script "$install_path"
 }
@@ -308,6 +296,7 @@ generate_agent_config() {
 
     [ "$need_backup" = "1" ] && backup_config "$config_file" "Agent配置"
 
+    local config_file=$1
     cat > "$config_file" <<EOF
 client_secret: your_agent_secret
 debug: false
@@ -342,9 +331,6 @@ EOF
         s/your_dashboard_ip_port/${dashboard_addr}/g;
         s/your_uuid/${uuid}/g;
     " "$config_file"
-
-    rm -f "${config_file}.bak"
-    info "Agent 配置生成成功: $config_file"
 }
 
 generate_agent_script() {

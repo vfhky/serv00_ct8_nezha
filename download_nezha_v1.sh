@@ -1,21 +1,24 @@
 #!/bin/bash
 
-# 初始化安装路径
-get_paths() {
-    local root_path=${1%/}
-    [ -z "$root_path" ] && { err "安装路径不能为空"; exit 1; }
-    echo "${root_path}" "${root_path}/dashboard" "${root_path}/agent"
+# 日志函数
+log() {
+    local level=$1
+    shift
+    case "$level" in
+        "error") printf "\033[0;31m[错误] %s\033[0m\n" "$*" >&2 ;;
+        "warn") printf "\033[0;33m[警告] %s\033[0m\n" "$*" ;;
+        "info") printf "\033[0;32m[信息] %s\033[0m\n" "$*" ;;
+        *) printf "%s\n" "$*" ;;
+    esac
 }
 
-err() { printf "\033[31m%s\033[0m\n" "$*" >&2; }
-info() { printf "\033[32m%s\033[0m\n" "$*"; }
-warn() { printf "\033[33m%s\033[0m\n" "$*"; }
+info() { log "info" "$@"; }
+warn() { log "warn" "$@"; }
+err() { log "error" "$@"; }
 
-trap '[ -n "$TMP_FILES" ] && rm -f $TMP_FILES' EXIT
-
-check_system() {
-    os_type=$(uname -s)
-    os_arch=$(uname -m)
+get_system_info() {
+    local os_type=$(uname -s)
+    local os_arch=$(uname -m)
 
     case "$os_type" in
         FreeBSD|Linux) ;;
@@ -55,10 +58,15 @@ prompt_input() {
 }
 
 get_sed_cmd() {
-    [ "$(uname)" = "FreeBSD" ] && echo "sed -i ''" || echo "sed -i";
+    if [ "$(uname)" = "FreeBSD" ] || [ "$(uname)" = "Darwin" ]; then
+        echo "sed -i ''"
+    else
+        echo "sed -i"
+    fi
 }
 
-backup_config_file() {
+# 备份配置文件
+backup_config() {
     local file_path=$1
     local file_type=${2:-"配置"}
 
@@ -74,6 +82,7 @@ backup_config_file() {
             return 1
         fi
     else
+        info "文件不存在，无需备份: $file_path"
         echo ""
     fi
 }
@@ -91,43 +100,18 @@ get_latest_version() {
     return 1
 }
 
-download_and_extract() {
-    local download_url=$1
-    local output_file=$2
-    local extract_dir=$3
-    local component=${4:-"组件"}
-
-    [ -z "$download_url" ] && { err "下载URL不能为空"; return 1; }
-    [ -z "$output_file" ] && { err "输出文件路径不能为空"; return 1; }
-    [ -z "$extract_dir" ] && { err "解压目录不能为空"; return 1; }
-
-    wget -t 2 -T 60 -qO "$output_file" "$download_url" || {
-        err "[$component] [${download_url}] 下载失败，请检查网络连接";
-        return 1;
-    }
-
-    info "===> [$component] [${download_url}] 下载完成"
-
-    unzip -oqq "$output_file" -d "$extract_dir" || {
-        err "[$component] [$output_file] 解压失败";
-        return 1;
-    }
-
-    rm -f "$output_file"
-    return 0
-}
-
-modify_dashboard_config() {
-    local dashboard_path=$1
-    local need_backup=$2
+# 生成 Dashboard 配置
+generate_dashboard_config() {
     info "> 修改面板配置"
+    local config_dir=$1
+    local need_backup=$2
+    local config_file="${config_dir}/data/config.yaml"
 
-    if [ "$need_backup" = "1" ]; then
-        backup_config_file "${NZ_DASHBOARD_PATH}/data/config.yaml" "dashboard"
-    fi
+    [ "$need_backup" = "1" ] && backup_config "$config_file" "Dashboard配置"
 
-    local config_file="${NZ_DASHBOARD_PATH}/nezha-config.yaml"
-    cat > "$config_file" <<EOF
+    # 生成配置模板
+    local temp_config="${config_dir}/nezha-config.yaml"
+    cat > "${temp_config}" <<EOF
 debug: false
 listenport: nz_port
 language: zh_CN
@@ -156,40 +140,36 @@ oauth2:
 EOF
 
     prompt_input "===> 请输入面板标题(如 TypeCodes Monitor): " "TypeCodes Monitor" nz_site_title
-    prompt_input "===> 请输入面板访问端口(如 80): " "" nz_port
+    prompt_input "===> 请输入面板访问端口(如 80): " "80" nz_port
     prompt_input "===> 请输入面板设置的 GRPC 通信地址(如 $(whoami).serv00.net:${nz_port}): " "" nz_hostport
-    prompt_input "===> 启用针对 gRPC 端口的 SSL/TLS加密，无特殊情况请选择false-否 true-是: " "false" nz_tls
+    prompt_input "===> 启用 SSL/TLS 加密(false-否 true-是，无特殊情况请选择false): " "false" nz_tls
+
+    # OAuth 配置 - 使用通用函数配置登录
+    configure_oauth "GitHub" "y"
+    configure_oauth "Gitee" "y"
 
     local sed_cmd=$(get_sed_cmd)
-    $sed_cmd "s/nz_site_title/${nz_site_title}/; s/nz_port/${nz_port}/; s/nz_hostport/${nz_hostport}/; s/nz_tls/${nz_tls}/" "$config_file"
 
-    prompt_input "===> 是否开启 GitHub 登录(y-是 n-否): " "y" oauth2_github
-    if [[ "${oauth2_github}" =~ ^[Yy]$ ]]; then
-        prompt_input "===> 请输入 Github Client ID: " "" github_client_id
-        prompt_input "===> 请输入 Github Client Secret: " "" github_client_secret
-        $sed_cmd "s/your_github_client_id/${github_client_id}/; s/your_github_client_secret/${github_client_secret}/" "$config_file"
-    fi
+    $sed_cmd "
+        s/nz_site_title/${nz_site_title}/g;
+        s/nz_port/${nz_port}/g;
+        s/nz_hostport/${nz_hostport}/g;
+        s/nz_tls/${nz_tls}/g;
+    " "$temp_config"
 
-    prompt_input "===> 是否开启 Gitee 登录(y-是 n-否): " "y" oauth2_gitee
-    if [[ "${oauth2_gitee}" =~ ^[Yy]$ ]]; then
-        prompt_input "===> 请输入 Gitee Client ID: " "" gitee_client_id
-        prompt_input "===> 请输入 Gitee Client Secret: " "" gitee_client_secret
-        $sed_cmd "s/your_gitee_client_id/${gitee_client_id}/; s/your_gitee_client_secret/${gitee_client_secret}/" "$config_file"
-    fi
+    apply_oauth_config "github" "$temp_config" "$sed_cmd"
+    apply_oauth_config "gitee" "$temp_config" "$sed_cmd"
 
-    mkdir -p "$dashboard_path/data"
-    mv -f "$config_file" "${dashboard_path}/data/config.yaml"
+    mkdir -p "${config_dir}/data"
+    mv -f "$temp_config" "$config_file"
+    rm -f "${temp_config}.bak"
+
     info "===> 面板配置修改成功"
 }
 
 download_dashboard() {
-    check_system
+    local install_path=$1
 
-    local paths=($(get_paths "$1"))
-    local root_path=${paths[0]}
-    local dashboard_path=${paths[1]}
-
-    mkdir -p "$dashboard_path"
 
     # 获取最新版本
     local api_list=(
@@ -200,41 +180,78 @@ download_dashboard() {
     )
 
     local version=$(get_latest_version "vfhky\/nezha-build@" "${api_list[@]}")
-
     if [ -z "$version" ]; then
         err "获取 Dashboard 版本号失败，请检查本机能否连接 ${array[0]}"
         return 1
     fi
 
     info "当前最新版本为: $version"
-    local version_num=${version#v}
 
-    if ! download_and_extract "https://github.com/vfhky/nezha-build/releases/download/${version}/nezha-dashboard.zip" \
-                            "${dashboard_path}/app.zip" \
-                            "$dashboard_path" \
-                            "dashboard"; then
-        exit 1
+    mkdir -p "$install_path"
+    local download_url="https://github.com/vfhky/nezha-build/releases/download/v${version}/nezha-dashboard.zip"
+    info "正在下载 Dashboard: $download_url"
+
+    if ! wget -qO "${install_path}/app.zip" "$download_url"; then
+        err "从以下地址下载 Dashboard 失败: $download_url"
+        return 1
     fi
 
-    local config_file="${dashboard_path}/data/config.yaml"
-    handle_config_file "$config_file" "dashboard" "modify_dashboard_config $dashboard_path"
+    info "Dashboard 下载成功"
 
-    echo "v=${version_num}" > "${dashboard_path}/version.txt"
+    # 处理配置文件
+    local config_file="${install_path}/data/config.yaml"
+    if [ -f "$config_file" ]; then
+        prompt_input "是否使用现有配置(y/n): " "y" use_existing
+        if [[ "$use_existing" =~ ^[Yy]$ ]]; then
+            backup_config "$config_file" "Dashboard配置"
+        else
+            generate_dashboard_config "$install_path" 0
+        fi
+    else
+        generate_dashboard_config "$install_path" 0
+    fi
+
+    # 解压并清理
+    info "正在解压 Dashboard..."
+    if ! unzip -oqq "${install_path}/app.zip" -d "$install_path"; then
+        err "解压 Dashboard 失败"
+        return 1
+    fi
+
+    echo "v=${version}" > "${install_path}/version.txt"
+    rm -f "${install_path}/app.zip"
+
     info "===> Dashboard 安装完成，版本: ${version}"
 }
 
-gen_agent_config() {
-    local agent_config_file="$1"
-    local need_backup=$2
-    local agent_path=$3
+# 应用OAuth配置
+apply_oauth_config() {
+    local platform=$1
+    local config_file=$2
+    local sed_command=$3
+    local enable_var="oauth2_${platform}"
 
-    [ -z "$agent_config_file" ] && { echo "File path is required."; return 1; }
+    # 将platform首字母大写用于变量名
+    local platform_upper="${platform^}"
+    local client_id_var="${platform}_client_id"
+    local client_secret_var="${platform}_client_secret"
 
-    if [ "$need_backup" = "1" ]; then
-        backup_config_file "$agent_config_file" "agent"
+    if [[ "${!enable_var}" =~ ^[Yy]$ ]]; then
+        $sed_command "
+            s/your_${platform}_client_id/${!client_id_var}/g;
+            s/your_${platform}_client_secret/${!client_secret_var}/g;
+        " "$config_file"
     fi
+}
 
-    cat > "$agent_config_file" <<EOF
+# 生成 Agent 配置
+generate_agent_config() {
+    local config_file=$1
+    local need_backup=$2
+
+    [ "$need_backup" = "1" ] && backup_config "$config_file" "Agent配置"
+
+    cat > "$config_file" <<EOF
 client_secret: your_agent_secret
 debug: false
 disable_auto_update: false
@@ -256,188 +273,214 @@ use_ipv6_country_code: false
 uuid: your_uuid
 EOF
 
-    prompt_input "===> 请输入面板配置文件中的密钥agentsecretkey: " "" your_agent_secret
-    prompt_input "===> 启用针对 gRPC 端口的 SSL/TLS加密，无特殊情况请选择false-否 true-是: " "false" your_tls
-    prompt_input "===> 请输入面板设置的 GRPC 通信地址(例如 vfhky.serv00.net:8888): " "" your_dashboard_ip_port
-    your_uuid=$(uuidgen)
+    prompt_input "===> 请输入面板密钥: " "" agent_secret
+    prompt_input "===> 启用 SSL/TLS 加密(false-否 true-是): " "false" tls_enabled
+    prompt_input "===> 请输入面板通信地址: " "" dashboard_addr
+    local uuid=$(uuidgen 2>/dev/null || cat /proc/sys/kernel/random/uuid 2>/dev/null || echo "$(date +%s%N)")
 
     local sed_cmd=$(get_sed_cmd)
-    $sed_cmd "s/your_agent_secret/${your_agent_secret}/; s/your_tls/${your_tls}/g; s/your_dashboard_ip_port/${your_dashboard_ip_port}/; s/your_uuid/${your_uuid}/" "$agent_config_file"
+    $sed_cmd "
+        s/your_agent_secret/${agent_secret}/g;
+        s/your_tls/${tls_enabled}/g;
+        s/your_dashboard_ip_port/${dashboard_addr}/g;
+        s/your_uuid/${uuid}/g;
+    " "$config_file"
+
+    rm -f "${config_file}.bak"
+    info "Agent 配置生成成功: $config_file"
 }
 
-handle_config_file() {
-    local config_file=$1
-    local component=$2
-    local config_func_cmd=$3
-
-    if [ -f "$config_file" ]; then
-        local backup_file=$(backup_config_file "$config_file" "$component")
-
-        prompt_input "===> 是否继续使用旧的配置数据(Y/y 是，N/n 否): " "" modify
-        if [[ "${modify}" =~ ^[Yy]$ ]]; then
-            [ -n "$backup_file" ] && mv -f "$backup_file" "$config_file"
-            info "===> [$component] 已使用旧配置"
-            return 0
-        fi
-    fi
-
-    info "===> [$component] 准备输入新配置"
-    eval $config_func_cmd 0
-    return 1
-}
-
-download_agent() {
-    check_system
-
-    local paths=($(get_paths "$1"))
-    local root_path=${paths[0]}
-    local agent_path=${paths[2]}
-
-    mkdir -p "$agent_path"
-
-    local api_list=(
-        "https://api.github.com/repos/nezhahq/agent/releases/latest"
-        "https://gitee.com/api/v5/repos/naibahq/agent/releases/latest"
-        "https://fastly.jsdelivr.net/gh/nezhahq/agent/"
-        "https://gcore.jsdelivr.net/gh/nezhahq/agent/"
-    )
-
-    local version=$(get_latest_version "nezhahq\/agent@" "${api_list[@]}")
-
-    if [ -z "$version" ]; then
-        err "获取 Agent 版本号失败，请检查网络连接"
-        return 1
-    fi
-
-    info "当前最新版本为: ${version}"
-
-    # 下载并解压
-    local download_url="https://github.com/nezhahq/agent/releases/download/${version}/nezha-agent_${os_type}_${os_arch}.zip"
-    local output_file="nezha-agent_${os_type}_${os_arch}.zip"
-
-    if ! wget -t 2 -T 60 -O "$output_file" "$download_url"; then
-        err "Agent 下载失败，请检查网络连接 ${api_list[0]}"
-        return 1
-    fi
-
-    info "===> Agent 下载完成"
-
-    if ! unzip -qo "$output_file"; then
-        err "Agent 解压失败"
-        return 1
-    fi
-
-    mv -f nezha-agent "$agent_path"
-    rm -f "$output_file"
-
-    gen_agent_run_sh "$agent_path"
-}
-
-gen_agent_run_sh() {
+# 生成 Agent 运行脚本
+generate_agent_script() {
     local agent_path=$1
-    local agent_run_sh="${agent_path}/nezha-agent.sh"
     local config_file="${agent_path}/config.yml"
 
     if [ -f "$config_file" ]; then
-        prompt_input "===> 是否继续使用旧的配置数据(Y/y 是，N/n 否): " "" modify
-        if [[ "${modify}" =~ ^[Yy]$ ]]; then
-            info "===> [agent] 您选择继续使用旧的配置文件[$config_file]"
-            return 0
+        prompt_input "是否使用现有配置(y/n): " "y" use_existing
+        if [[ ! "$use_existing" =~ ^[Yy]$ ]]; then
+            generate_agent_config "$config_file" 1
         else
-            info "===> [agent] 准备输入新的配置数据"
-            gen_agent_config "$config_file" 1 "$agent_path"
+            info "使用现有 Agent 配置: $config_file"
         fi
     else
-        info "===> [agent] 准备输入新的配置数据"
-        gen_agent_config "$config_file" 0 "$agent_path"
+        generate_agent_config "$config_file" 0
     fi
 
-    cat > "$agent_run_sh" <<EOF
+    cat > "${agent_path}/nezha-agent.sh" <<EOF
 #!/bin/bash
 nohup ${agent_path}/nezha-agent \\
     -c ${config_file} \\
     > /dev/null 2>&1 &
 EOF
 
-    chmod +x "$agent_run_sh"
+    chmod +x "${agent_path}/nezha-agent.sh"
+    info "Agent 启动脚本生成成功: ${agent_path}/nezha-agent.sh"
 }
 
-# 修改现有配置
+# 下载 Agent
+download_agent() {
+    local install_path=$1
+    local sys_info
+    local os_type
+    local os_arch
+
+    sys_info=$(get_system_info) || { err "获取系统信息失败"; exit 1; }
+    IFS=':' read -r os_type os_arch <<< "$sys_info"
+    info "系统类型: $os_type, 架构: $os_arch"
+
+    version=$(get_latest_version "nezhahq/agent")
+    if [ -z "$version" ]; then
+        err "无法获取 Agent 版本"
+        return 1
+    fi
+
+    info "最新版本: v${version}"
+
+    # 确定下载URL
+    local is_cn=$(check_location)
+    local download_url
+    if [ "$is_cn" = "true" ]; then
+        info "检测到中国大陆网络环境，使用 Gitee 镜像"
+        download_url="https://gitee.com/naibahq/agent/releases/download/v${version}/nezha-agent_${os_type}_${os_arch}.zip"
+    else
+        download_url="https://github.com/nezhahq/agent/releases/download/v${version}/nezha-agent_${os_type}_${os_arch}.zip"
+    fi
+
+    info "正在下载 Agent: $download_url"
+    if ! wget -t 2 -T 60 -O "nezha-agent_${os_type}_${os_arch}.zip" "$download_url"; then
+        err "从以下地址下载 Agent 失败: $download_url"
+        return 1
+    fi
+
+    mkdir -p "$install_path"
+    info "正在解压 Agent..."
+    if ! unzip -qo "nezha-agent_${os_type}_${os_arch}.zip" && mv -f nezha-agent "$install_path"; then
+        err "解压或移动 Agent 失败"
+        return 1
+    fi
+
+    rm -f "nezha-agent_${os_type}_${os_arch}.zip"
+    info "Agent 下载成功，版本: v${version}"
+    info "安装路径: $install_path"
+
+    generate_agent_script "$install_path"
+}
+
+# 修改配置
 modify_config() {
-    info "====> 开始准备修改，已知哪吒安装目录为[$1]"
-    check_system
+    local app_path=$1
+    info "开始准备修改，哪吒安装目录为: $app_path"
 
-    local paths=($(get_paths "$1"))
-    local root_path=${paths[0]}
-    local dashboard_path=${paths[1]}
-    local agent_path=${paths[2]}
+    prompt_input "修改 Dashboard 配置？(y/n): " "n" modify_dash
+    if [[ "$modify_dash" =~ ^[Yy]$ ]]; then
+        local dashboard_path="${app_path}/dashboard"
+        local config_file="${dashboard_path}/data/config.yaml"
 
-    prompt_input "===> 是否修改dashboard配置(Y/y 是，N/n 否): " "N" modify
-    if [[ "${modify}" =~ ^[Yy]$ ]]; then
-        local dashboard_config_file="${dashboard_path}/data/config.yaml"
-        if [ ! -f "$dashboard_config_file" ]; then
-            err "dashboard的配置文件[$dashboard_config_file]不存在，请检查是否已经安装"
-            exit 1
+        if [ ! -f "$config_file" ]; then
+            err "找不到 Dashboard 配置文件: $config_file"
+            return 1
         fi
 
-        info "====> 准备开始修改dashboard配置文件[$dashboard_config_file]"
-        modify_dashboard_config "$dashboard_path" 1
+        generate_dashboard_config "$dashboard_path" 1
 
-        if dashboard_pid=$(pgrep -f nezha-dashboard); then
-            kill -9 "$dashboard_pid"
-            info "====> 关闭哪吒dashboard进程成功"
+        # 重启 dashboard
+        if pgrep -f nezha-dashboard >/dev/null; then
+            info "正在重启 Dashboard..."
+            pkill -f nezha-dashboard
+            info "Dashboard 进程已终止，请手动重启"
+        else
+            info "未检测到运行中的 Dashboard 进程"
         fi
     fi
 
-    prompt_input "===> 是否修改agent配置(Y/y 是，N/n 否): " "N" modify
-    if [[ "${modify}" =~ ^[Yy]$ ]]; then
-        agent_config_file="${agent_path}/config.yml"
-        if [ ! -f "$agent_config_file" ]; then
-            err "agent的配置文件[$agent_config_file]不存在，请检查是否已经安装"
-            exit 1
+    prompt_input "修改 Agent 配置？(y/n): " "n" modify_agent
+    if [[ "$modify_agent" =~ ^[Yy]$ ]]; then
+        local agent_path="${app_path}/agent"
+        local config_file="${agent_path}/config.yml"
+
+        if [ ! -f "$config_file" ]; then
+            err "找不到 Agent 配置文件: $config_file"
+            return 1
         fi
 
-        info "====> 准备开始修改agent配置文件[$agent_config_file]"
-        gen_agent_config "$agent_config_file" 1 "$agent_path"
+        generate_agent_config "$config_file" 1
 
-        if agent_pid=$(pgrep -f nezha-agent); then
-            kill -9 "$agent_pid"
-            info "====> 关闭哪吒agent进程成功"
+        # 重启 agent
+        if pgrep -f nezha-agent >/dev/null; then
+            info "正在重启 Agent..."
+            pkill -f nezha-agent
+            info "Agent 进程已终止，请手动重启"
+        else
+            info "未检测到运行中的 Agent 进程"
         fi
+    fi
+
+    info "配置修改完成"
+}
+
+# 配置OAuth登录
+configure_oauth() {
+    local platform=$1
+    local default_value=$2
+    local platform_lower=$(echo "$platform" | tr '[:upper:]' '[:lower:]')
+    local var_prefix="${platform_lower}"
+
+    local enable_var="oauth2_${platform_lower}"
+    prompt_input "是否开启 ${platform} 登录(y/n): " "$default_value" "$enable_var"
+
+    if [[ "${!enable_var}" =~ ^[Yy]$ ]]; then
+        prompt_input "请输入 ${platform} Client ID: " "" "${var_prefix}_client_id"
+        prompt_input "请输入 ${platform} Client Secret: " "" "${var_prefix}_client_secret"
     fi
 }
 
+# 显示帮助信息
+show_help() {
+    cat <<EOF
+使用方法: $0 <命令> <路径>
 
-if [ "$#" -lt 2 ]; then
-    echo "Error: Not enough arguments provided."
-    echo "Usage: $0 <command> <arg>"
-    echo "Commands:"
-    echo "  dashboard  app 下载 dashboard"
-    echo "  agent       下载 agent"
-    echo "  config      修改dashboard或者agent的配置"
-    exit 1
-fi
+命令:
+  dashboard  下载并配置 Dashboard
+  agent      下载并配置 Agent
+  config     修改 Dashboard 或 Agent 的配置
 
-command="$1"
-arg="$2"
+示例:
+  $0 dashboard /opt/nezha/dashboard  # 下载 Dashboard 到指定目录
+  $0 agent /opt/nezha/agent          # 下载 Agent 到指定目录
+  $0 config /opt/nezha               # 修改已安装的配置
+EOF
+}
 
-case "$command" in
-    "dashboard")
-        download_dashboard "$arg"
-        ;;
-    "agent")
-        download_agent "$arg"
-        ;;
-    "config")
-        modify_config "$arg"
-        ;;
-    *)
-        echo "Error: Invalid command '$command'"
-        echo "====== Usage ======"
-        echo "  $0 dashboard <arg>   下载 dashboard"
-        echo "  $0 agent <arg>       下载 agent"
-        echo "  $0 config <arg>      修改dashboard或者agent的配置"
+# 主函数
+main() {
+    if [ "$#" -lt 2 ]; then
+        show_help
         exit 1
-        ;;
-esac
+    fi
 
+    local command=$1
+    local path=$2
+
+    case "$command" in
+        "dashboard")
+            download_dashboard "$path"
+            ;;
+        "agent")
+            download_agent "$path"
+            ;;
+        "config")
+            modify_config "$path"
+            ;;
+        "help"|"-h"|"--help")
+            show_help
+            ;;
+        *)
+            err "无效的命令: $command"
+            show_help
+            exit 1
+            ;;
+    esac
+}
+
+# 执行主函数
+main "$@"

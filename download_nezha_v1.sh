@@ -237,7 +237,7 @@ download_dashboard() {
     \rm -rf "${install_path}"/app.zip
 
     if [[ -f "${config_file}" ]]; then
-        prompt_input "===> 是否继续使用旧的配置数据(Y/y 是，N/n 否): " "" modify
+        prompt_input "===> 是否继续使用旧的配置数据(y/n): " "" modify
         if [[ ! "${modify}" =~ ^[Yy]$ ]]; then
             info "===> [dashboard] 准备修改配置文件"
             generate_dashboard_config "$install_path" 0

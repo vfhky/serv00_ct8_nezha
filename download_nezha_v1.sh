@@ -250,7 +250,7 @@ download_dashboard() {
     echo "v=${version_num}" > "${install_path}/version.txt"
     \rm -rf "${install_path}"/app.zip
 
-    if [[ -f "${config_backup}" ]]; then
+    if [[ -n "${config_backup}" ]]; then
         prompt_input "===> 是否继续使用旧的配置数据(y/n): " "" modify
         if [[ ! "${modify}" =~ ^[Yy]$ ]]; then
             info "===> [dashboard] 准备修改配置文件"

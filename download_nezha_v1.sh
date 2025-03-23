@@ -8,11 +8,13 @@ log() {
         "error") printf "\033[0;31m%s\033[0m\n" "$*" >&2 ;;
         "warn") printf "\033[0;33m%s\033[0m\n" "$*" ;;
         "info") printf "\033[0;32m%s\033[0m\n" "$*" ;;
+        "info_input") printf "\033[0;32m%s\033[0m" "$*" ;;
         *) printf "%s\n" "$*" ;;
     esac
 }
 
 info() { log "info" "$@"; }
+info_input() { log "info_input" "$@"; }
 warn() { log "warn" "$@"; }
 err() { log "error" "$@"; }
 
@@ -42,7 +44,7 @@ prompt_input() {
     local input_variable_name=$3
 
     while true; do
-        info "$prompt_message"
+        info_input "$prompt_message"
         read -r input_value
 
         if [ -n "$input_value" ]; then

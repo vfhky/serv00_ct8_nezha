@@ -36,6 +36,8 @@ get_system_info() {
         riscv64) os_arch="riscv64" ;;
         *) err "不支持的架构: $os_arch"; exit 1 ;;
     esac
+
+    echo "${os_type}:${os_arch}"
 }
 
 prompt_input() {
@@ -76,14 +78,17 @@ backup_config() {
     if [ -f "$file_path" ]; then
         local backup_path="${file_path}.$(date +%Y_%m_%d_%H_%M)"
         if cp -f "$file_path" "$backup_path"; then
-            info "====> 已备份${file_type}文件到 ${backup_path}"
+            info "====> 已备份${file_type}文件到 ${backup_path}" >&2
+            echo "$backup_path"
+            return 0
         else
-            err "备份${file_type}文件失败"
+            err "备份${file_type}文件失败" >&2
             return 1
         fi
     else
-        info "文件不存在，无需备份: $file_path"
+        info "文件不存在，无需备份: $file_path" >&2
         echo ""
+        return 0
     fi
 }
 
@@ -225,8 +230,12 @@ download_dashboard() {
     info "===> [dashboard] ${download_url} 下载完成"
 
     local config_file="${install_path}/data/config.yaml"
+    local config_backup=""
     if [ -f "$config_file" ]; then
-        backup_config "$config_file" "Dashboard配置"
+        config_backup=$(backup_config "$config_file" "dashboard配置") || {
+            err "备份配置文件失败"
+            return 1
+        }
     fi
 
     if ! unzip -oqq "${install_path}/app.zip" -d "$install_path"; then
@@ -234,11 +243,14 @@ download_dashboard() {
         return 1
     fi
 
+    if [ -n "$config_backup" ] && [ -f "$config_backup" ]; then
+        \mv -f "$config_backup" "$config_file"
+    fi
 
     echo "v=${version_num}" > "${install_path}/version.txt"
     \rm -rf "${install_path}"/app.zip
 
-    if [[ -f "${config_file}" ]]; then
+    if [[ -f "${config_backup}" ]]; then
         prompt_input "===> 是否继续使用旧的配置数据(y/n): " "" modify
         if [[ ! "${modify}" =~ ^[Yy]$ ]]; then
             info "===> [dashboard] 准备修改配置文件"

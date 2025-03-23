@@ -36,7 +36,7 @@ def get_shell_run_cmd(shell_path, *args):
 def run_shell_script_with_os(shell_path, *args):
     cmd = get_shell_run_cmd(shell_path, *args)
     result = os.system(cmd)
-    
+
     if result == 0:
         logger.info(f"Shell command executed successfully: {cmd}")
         return True
@@ -93,7 +93,7 @@ def get_serv00_config_file(serv00_ct8_dir, file_name):
 
 def get_serv00_dir_file(serv00_ct8_dir, file_name):
     return os.path.join(serv00_ct8_dir, file_name)
-    
+
 def check_file_exists(file_path):
     return os.path.exists(file_path)
 
@@ -123,15 +123,15 @@ def need_check_and_heart_beat(heat_beat_extra_info):
     # 自身定时任务执行
     if not heat_beat_extra_info:
         return True
-    
+
     return heat_beat_extra_info.get('type') != "0"
 
 def prompt_user_input(msg):
     valid_inputs = {'y', 'n'}
-    
+
     while True:
-        user_input = input(f"是否{msg}? (Y/y 是，N/n 否): ").strip().lower()
-        
+        user_input = input(f"是否{msg}? (y/n): ").strip().lower()
+
         if user_input in valid_inputs:
             return user_input == 'y'
         else:

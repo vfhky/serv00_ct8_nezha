@@ -171,10 +171,10 @@ modify_dashboard_config() {
 
     # -i "s/nz_oauth2_type/${nz_oauth2_type}/" "${config_file}"
     sed -i '' "s/nz_oauth2_type/${nz_oauth2_type}/" "${config_file}"
-    
+
     #sed -i "s/nz_admin_logins/${nz_admin_logins}/" "${config_file}"
     sed -i '' "s/nz_admin_logins/${nz_admin_logins}/" "${config_file}"
-    
+
     #sed -i "s/nz_grpc_port/${nz_grpc_port}/" "${config_file}"
     sed -i '' "s/nz_grpc_port/${nz_grpc_port}/" "${config_file}"
 
@@ -204,7 +204,7 @@ modify_dashboard_config() {
         sed -i '' "s/80/${nz_site_port}/" "${config_file}"
     fi
 
-    mkdir -p $NZ_DASHBOARD_PATH/data  2>/dev/null 
+    mkdir -p $NZ_DASHBOARD_PATH/data  2>/dev/null
     \mv -f "${config_file}" ${NZ_DASHBOARD_PATH}/data/config.yaml
     if [ "$IS_DOCKER_NEZHA" = 1 ]; then
         mv -f /tmp/nezha-docker-compose.yaml ${NZ_DASHBOARD_PATH}/docker-compose.yaml
@@ -263,7 +263,7 @@ download_dashboard() {
     \rm -rf "${NZ_DASHBOARD_PATH}"/app.zip
 
     if [[ -f "${config_file_bak}" ]]; then
-        prompt_input "===> 是否继续使用旧的配置数据(Y/y 是，N/n 否): " "" modify
+        prompt_input "===> 是否继续使用旧的配置数据(y/n): " "" modify
         if [[ "${modify}" =~ ^[Yy]$ ]]; then
             mv -f "${config_file_bak}" "${config_file}"
             echo "===> [dashboard] 已经成功使用旧的配置数据 ${config_file}"
@@ -351,7 +351,7 @@ modify_config() {
     pre_check
     NZ_APP_PATH=$1
 
-    prompt_input "===> 是否修改dashboard配置(Y/y 是，N/n 否): " "" modify
+    prompt_input "===> 是否修改dashboard配置(y/n): " "" modify
     if [[ "${modify}" =~ ^[Yy]$ ]]; then
         NZ_DASHBOARD_PATH="${NZ_APP_PATH}/dashboard"
         NZ_DASHBOARD_CONFIG_FILE="${NZ_DASHBOARD_PATH}/data/config.yaml"
@@ -370,7 +370,7 @@ modify_config() {
         fi
     fi
 
-    prompt_input "===> 是否修改agent配置(Y/y 是，N/n 否): " "" modify
+    prompt_input "===> 是否修改agent配置(y/n): " "" modify
     if [[ "${modify}" =~ ^[Yy]$ ]]; then
         NZ_AGENT_PATH="${NZ_APP_PATH}/agent"
         agent_run_sh="${NZ_AGENT_PATH}/nezha-agent.sh"

@@ -214,7 +214,7 @@ download_dashboard() {
     info "===> [dashboard] 当前最新版本为: $version"
 
     mkdir -p "$install_path"
-    local download_url="https://github.com/vfhky/nezha-build/releases/download/v${version}/nezha-dashboard.zip"
+    local download_url="https://github.com/vfhky/nezha-build/releases/download/${version}/nezha-dashboard.zip"
 
     if ! wget -qO "${install_path}/app.zip" "$download_url"; then
         err "===> [dashboard] ${download_url} 下载失败，请检查是否能正常访问"
@@ -274,7 +274,7 @@ download_agent() {
     info "===> [agent] 当前最新版本为: $version"
 
 
-    local download_url="https://github.com/nezhahq/agent/releases/download/v${version}/nezha-agent_${os_type}_${os_arch}.zip"
+    local download_url="https://github.com/nezhahq/agent/releases/download/${version}/nezha-agent_${os_type}_${os_arch}.zip"
     if ! wget -t 2 -T 60 -O "nezha-agent_${os_type}_${os_arch}.zip" "$download_url"; then
         err "===> [agent] ${download_url} 下载失败，请检查是否能正常访问"
         return 1

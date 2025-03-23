@@ -288,10 +288,8 @@ update_check_cfg() {
 
     if grep -q '^CHECK_MONITOR_URL_DNS=' "$monitor_config_file"; then
         eval "$sed_command 's/^CHECK_MONITOR_URL_DNS=.*/CHECK_MONITOR_URL_DNS=${opt}/' \"$monitor_config_file\""
-        echo "更新了CHECK_MONITOR_URL_DNS=${opt}在配置文件中"
     else
         echo "CHECK_MONITOR_URL_DNS=${opt}" >> "$monitor_config_file"
-        echo "追加了CHECK_MONITOR_URL_DNS=${opt}到配置文件中"
     fi
 }
 

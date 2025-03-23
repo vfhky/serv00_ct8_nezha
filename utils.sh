@@ -124,7 +124,7 @@ rename_config_files() {
                     fi
                 else
                     key=$(echo "$line" | awk -F= '{print $1}')
-                    
+
                     if ! grep -q "^${key}" "$keys_file"; then
                         echo "$line" >> "$new_file"
                     fi
@@ -458,6 +458,9 @@ case "$1" in
     "uninstall")
         uninstall
         ;;
+    "tcp")
+        sockstat -4
+        ;;
     *)
         echo "====== 用法 ====="
         echo "$0 init - 优化使用环境"
@@ -475,6 +478,7 @@ case "$1" in
         echo "$0 restart - 重启面板和agent"
         echo "$0 show_agent_key - 查看面板生成的 agentsecretkey 参数: 面板config.yaml配置文件路径"
         echo "$0 uninstall - 卸载哪吒dashboard和agent"
+        echo "$0 查看TCP/UDP连接 sockstat -4"
         exit 1
         ;;
 esac

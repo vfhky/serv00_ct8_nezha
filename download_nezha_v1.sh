@@ -59,7 +59,7 @@ prompt_input() {
 
 get_sed_cmd() {
     if [ "$(uname)" = "FreeBSD" ] || [ "$(uname)" = "Darwin" ]; then
-        echo "sed -i ''"
+        echo "sed -i .bak"
     else
         echo "sed -i"
     fi

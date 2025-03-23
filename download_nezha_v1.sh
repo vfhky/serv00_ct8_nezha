@@ -92,7 +92,7 @@ get_latest_version() {
 
     for api in "$@"; do
         local version=$(curl -m 3 -sL "$api" | grep -E "tag_name|option\.value" | head -n 1 |
-                 sed -E 's/.*"tag_name"[^"]*"([^"]+)".*/\1/; s/.*option\.value.*'"'"'([^'"'"']+)'"'"'.*/\1/; s/'$repo_pattern'/v/g; s/[", ]//g')
+                 sed -E 's/.*"tag_name"[^"]*"([^"]+)".*/\1/; s/.*option\.value.*'"'"'([^'"'"']+)'"'"'.*/\1/; s/'$repo_pattern'/v/g; s/[\", ]//g')
         [ -n "$version" ] && { echo "$version"; return 0; }
     done
 
@@ -200,7 +200,6 @@ EOF
 download_dashboard() {
     local install_path=$1
 
-
     # 获取最新版本
     local api_list=(
         "https://api.github.com/repos/vfhky/nezha-build/releases/latest"
@@ -228,15 +227,9 @@ download_dashboard() {
     info "===> [dashboard] ${download_url} 下载完成"
 
     local config_file="${install_path}/data/config.yaml"
+    local config_backup=""
     if [ -f "$config_file" ]; then
-        prompt_input "是否使用现有配置(y/n): " "y" use_existing
-        if [[ "$use_existing" =~ ^[Yy]$ ]]; then
-            backup_config "$config_file" "dashboard配置"
-        else
-            generate_dashboard_config "$install_path" 0
-        fi
-    else
-        generate_dashboard_config "$install_path" 0
+        config_backup=$(backup_config "$config_file" "Dashboard配置")
     fi
 
     if ! unzip -oqq "${install_path}/app.zip" -d "$install_path"; then
@@ -244,10 +237,21 @@ download_dashboard() {
         return 1
     fi
 
+    # 如果有备份的配置文件，恢复它
+    if [ -n "$config_backup" ] && [ -f "$config_backup" ] && [[ ! "$modify_config" =~ ^[Yy]$ ]]; then
+        info "正在恢复原配置文件..."
+        mkdir -p "${install_path}/data"
+        cp -f "$config_backup" "$config_file"
+        info "配置文件已恢复"
+    fi
+
     echo "v=${version}" > "${install_path}/version.txt"
     rm -f "${install_path}/app.zip"
-}
 
+    info "Dashboard 安装完成"
+    info "版本: v${version}"
+    info "安装路径: ${install_path}"
+}
 
 # 生成 Agent 配置
 generate_agent_config() {

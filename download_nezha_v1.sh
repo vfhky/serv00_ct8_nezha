@@ -65,7 +65,6 @@ get_sed_cmd() {
     fi
 }
 
-# 备份配置文件
 backup_config() {
     local file_path=$1
     local file_type=${2:-"配置"}
@@ -100,16 +99,48 @@ get_latest_version() {
     return 1
 }
 
-# 生成 Dashboard 配置
+configure_oauth() {
+    local platform=$1
+    local default_value=$2
+    local platform_lower=$(echo "$platform" | tr '[:upper:]' '[:lower:]')
+    local var_prefix="${platform_lower}"
+
+    local enable_var="oauth2_${platform_lower}"
+    prompt_input "是否开启 ${platform} 登录(y/n): " "$default_value" "$enable_var"
+
+    if [[ "${!enable_var}" =~ ^[Yy]$ ]]; then
+        prompt_input "请输入 ${platform} Client ID: " "" "${var_prefix}_client_id"
+        prompt_input "请输入 ${platform} Client Secret: " "" "${var_prefix}_client_secret"
+    fi
+}
+
+apply_oauth_config() {
+    local platform=$1
+    local config_file=$2
+    local sed_command=$3
+    local enable_var="oauth2_${platform}"
+
+    local platform_upper="${platform^}"
+    local client_id_var="${platform}_client_id"
+    local client_secret_var="${platform}_client_secret"
+
+    if [[ "${!enable_var}" =~ ^[Yy]$ ]]; then
+        $sed_command "
+            s/your_${platform}_client_id/${!client_id_var}/g;
+            s/your_${platform}_client_secret/${!client_secret_var}/g;
+        " "$config_file"
+    fi
+}
+
 generate_dashboard_config() {
     info "> 修改面板配置"
+
     local config_dir=$1
     local need_backup=$2
     local config_file="${config_dir}/data/config.yaml"
 
-    [ "$need_backup" = "1" ] && backup_config "$config_file" "Dashboard配置"
+    [ "$need_backup" = "1" ] && backup_config "$config_file" "dashboard配置"
 
-    # 生成配置模板
     local temp_config="${config_dir}/nezha-config.yaml"
     cat > "${temp_config}" <<EOF
 debug: false
@@ -140,11 +171,10 @@ oauth2:
 EOF
 
     prompt_input "===> 请输入面板标题(如 TypeCodes Monitor): " "TypeCodes Monitor" nz_site_title
-    prompt_input "===> 请输入面板访问端口(如 80): " "80" nz_port
+    prompt_input "===> 请输入面板访问端口: " "" nz_port
     prompt_input "===> 请输入面板设置的 GRPC 通信地址(如 $(whoami).serv00.net:${nz_port}): " "" nz_hostport
     prompt_input "===> 启用 SSL/TLS 加密(false-否 true-是，无特殊情况请选择false): " "false" nz_tls
 
-    # OAuth 配置 - 使用通用函数配置登录
     configure_oauth "GitHub" "y"
     configure_oauth "Gitee" "y"
 
@@ -189,21 +219,19 @@ download_dashboard() {
 
     mkdir -p "$install_path"
     local download_url="https://github.com/vfhky/nezha-build/releases/download/v${version}/nezha-dashboard.zip"
-    info "正在下载 Dashboard: $download_url"
 
     if ! wget -qO "${install_path}/app.zip" "$download_url"; then
-        err "从以下地址下载 Dashboard 失败: $download_url"
+        err "===> [dashboard] ${download_url} 下载失败，请检查是否能正常访问"
         return 1
     fi
 
-    info "Dashboard 下载成功"
+    info "===> [dashboard] ${download_url} 下载完成"
 
-    # 处理配置文件
     local config_file="${install_path}/data/config.yaml"
     if [ -f "$config_file" ]; then
         prompt_input "是否使用现有配置(y/n): " "y" use_existing
         if [[ "$use_existing" =~ ^[Yy]$ ]]; then
-            backup_config "$config_file" "Dashboard配置"
+            backup_config "$config_file" "dashboard配置"
         else
             generate_dashboard_config "$install_path" 0
         fi
@@ -211,38 +239,15 @@ download_dashboard() {
         generate_dashboard_config "$install_path" 0
     fi
 
-    # 解压并清理
-    info "正在解压 Dashboard..."
     if ! unzip -oqq "${install_path}/app.zip" -d "$install_path"; then
-        err "解压 Dashboard 失败"
+        err "====> [dashboard] ${install_path}/app.zip 解压失败"
         return 1
     fi
 
     echo "v=${version}" > "${install_path}/version.txt"
     rm -f "${install_path}/app.zip"
-
-    info "===> Dashboard 安装完成，版本: ${version}"
 }
 
-# 应用OAuth配置
-apply_oauth_config() {
-    local platform=$1
-    local config_file=$2
-    local sed_command=$3
-    local enable_var="oauth2_${platform}"
-
-    # 将platform首字母大写用于变量名
-    local platform_upper="${platform^}"
-    local client_id_var="${platform}_client_id"
-    local client_secret_var="${platform}_client_secret"
-
-    if [[ "${!enable_var}" =~ ^[Yy]$ ]]; then
-        $sed_command "
-            s/your_${platform}_client_id/${!client_id_var}/g;
-            s/your_${platform}_client_secret/${!client_secret_var}/g;
-        " "$config_file"
-    fi
-}
 
 # 生成 Agent 配置
 generate_agent_config() {
@@ -416,22 +421,6 @@ modify_config() {
     fi
 
     info "配置修改完成"
-}
-
-# 配置OAuth登录
-configure_oauth() {
-    local platform=$1
-    local default_value=$2
-    local platform_lower=$(echo "$platform" | tr '[:upper:]' '[:lower:]')
-    local var_prefix="${platform_lower}"
-
-    local enable_var="oauth2_${platform_lower}"
-    prompt_input "是否开启 ${platform} 登录(y/n): " "$default_value" "$enable_var"
-
-    if [[ "${!enable_var}" =~ ^[Yy]$ ]]; then
-        prompt_input "请输入 ${platform} Client ID: " "" "${var_prefix}_client_id"
-        prompt_input "请输入 ${platform} Client Secret: " "" "${var_prefix}_client_secret"
-    fi
 }
 
 # 显示帮助信息

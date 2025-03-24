@@ -78,7 +78,7 @@ backup_config() {
     if [ -f "$file_path" ]; then
         local backup_path="${file_path}.$(date +%Y_%m_%d_%H_%M)"
         if cp -f "$file_path" "$backup_path"; then
-            info "====> 已备份${file_type}文件到 ${backup_path}" >&2
+            info "===> 已备份${file_type}文件到 ${backup_path}" >&2
             echo "$backup_path"
             return 0
         else
@@ -86,7 +86,6 @@ backup_config() {
             return 1
         fi
     else
-        info "文件不存在，无需备份: $file_path" >&2
         echo ""
         return 0
     fi

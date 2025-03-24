@@ -138,8 +138,6 @@ apply_oauth_config() {
 }
 
 generate_dashboard_config() {
-    info "> 修改面板配置"
-
     local config_dir=$1
     local need_backup=$2
     local config_file="${config_dir}/data/config.yaml"
@@ -370,59 +368,55 @@ EOF
     chmod +x "${agent_path}/nezha-agent.sh"
 }
 
-# 修改配置
 modify_config() {
     local app_path=$1
-    info "开始准备修改，哪吒安装目录为: $app_path"
+    info "====> 开始准备修改，已知哪吒安装目录为[$app_path]"
 
-    prompt_input "修改 Dashboard 配置？(y/n): " "n" modify_dash
+    prompt_input "===> 是否修改dashboard配置(y/n): " "" modify_dash
     if [[ "$modify_dash" =~ ^[Yy]$ ]]; then
         local dashboard_path="${app_path}/dashboard"
         local config_file="${dashboard_path}/data/config.yaml"
 
         if [ ! -f "$config_file" ]; then
-            err "找不到 Dashboard 配置文件: $config_file"
-            return 1
+            err "dashboard的配置文件[${config_file}]不存在，请检查是否已经安装过了dashboard"
+            exit 1
         fi
 
+        info "====> 开始修改dashboard配置文件[${config_file}]"
         generate_dashboard_config "$dashboard_path" 1
 
-        # 重启 dashboard
         if pgrep -f nezha-dashboard >/dev/null; then
-            info "正在重启 Dashboard..."
             pkill -f nezha-dashboard
-            info "Dashboard 进程已终止，请手动重启"
+            info "====> 关闭哪吒dashboard进程成功"
         else
-            info "未检测到运行中的 Dashboard 进程"
+            info "====> 未检测到运行中的 Dashboard 进程"
         fi
     fi
 
-    prompt_input "修改 Agent 配置？(y/n): " "n" modify_agent
+    prompt_input "===> 是否修改agent配置(y/n): " "" modify_agent
     if [[ "$modify_agent" =~ ^[Yy]$ ]]; then
         local agent_path="${app_path}/agent"
         local config_file="${agent_path}/config.yml"
 
         if [ ! -f "$config_file" ]; then
-            err "找不到 Agent 配置文件: $config_file"
+            err "agent的配置文件[${config_file}]不存在，请检查是否已经安装过了agent"
             return 1
         fi
 
+        echo "====> 开始修改agent配置文件[${config_file}]"
         generate_agent_config "$config_file" 1
 
-        # 重启 agent
         if pgrep -f nezha-agent >/dev/null; then
-            info "正在重启 Agent..."
             pkill -f nezha-agent
-            info "Agent 进程已终止，请手动重启"
+            info "====> 关闭哪吒agent进程成功"
         else
-            info "未检测到运行中的 Agent 进程"
+            info "====> 未检测到运行中的 Agent 进程"
         fi
     fi
 
-    info "配置修改完成"
+    info "====> 配置修改完成"
 }
 
-# 显示帮助信息
 show_help() {
     cat <<EOF
 使用方法: $0 <命令> <路径>
@@ -439,7 +433,6 @@ show_help() {
 EOF
 }
 
-# 主函数
 main() {
     if [ "$#" -lt 2 ]; then
         show_help
@@ -470,5 +463,4 @@ main() {
     esac
 }
 
-# 执行主函数
 main "$@"

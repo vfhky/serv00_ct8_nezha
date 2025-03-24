@@ -307,7 +307,7 @@ generate_agent_config() {
     local config_file=$1
     local need_backup=$2
 
-    [ "$need_backup" = "1" ] && backup_config "$config_file" "Agent配置"
+    [ "$need_backup" = "1" ] && $(backup_config "$config_file" "agent配置")
 
     local config_file=$1
     cat > "$config_file" <<EOF

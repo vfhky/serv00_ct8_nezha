@@ -18,8 +18,13 @@ def shutdown_thread_pool():
     global _thread_pool
     if _thread_pool:
         logger.info("正在关闭线程池...")
-        _thread_pool.shutdown(wait=True)
-        logger.info("线程池已关闭")
+        try:
+            _thread_pool.shutdown(wait=True)
+            logger.info("线程池已关闭")
+        except Exception as e:
+            logger.error(f"关闭线程池时出错: {str(e)}")
+        finally:
+            _thread_pool = None
 
 class AsyncExecutor:
     """通用异步执行器，用于并行处理多个相似的任务"""
@@ -154,31 +159,53 @@ class AsyncExecutor:
                                **kwargs) -> List[Optional[T]]:
         """
         并行执行指定函数，处理列表中的每个项目
-
-        Args:
-            items: 要处理的项目列表
-            func: 处理单个项目的函数
-            max_concurrency: 最大并发数
-            timeout: 每个任务的超时时间（秒），None表示无超时
-            ignore_exceptions: 是否忽略单个任务的异常，继续执行其他任务
-            **kwargs: 传递给func的额外参数
-
-        Returns:
-            处理结果列表
         """
         if not items:
+            logger.debug("没有项目需要处理，跳过并行执行")
             return []
             
         tasks = []
-        for item in items:
+        completed_count = 0
+        total_count = len(items)
+        
+        # 创建进度跟踪装饰器
+        def progress_tracker(result, item_index):
+            nonlocal completed_count
+            completed_count += 1
+            if total_count > 10:  # 只有当项目数量较多时才记录进度
+                progress = (completed_count / total_count) * 100
+                if completed_count == 1 or completed_count == total_count or completed_count % 5 == 0:
+                    logger.debug(f"处理进度: {progress:.1f}% ({completed_count}/{total_count})")
+            return result
+            
+        # 为每个项目创建任务
+        for i, item in enumerate(items):
             if timeout is not None:
                 task = AsyncExecutor.run_in_thread_with_timeout(func, timeout, item, **kwargs)
             else:
                 task = AsyncExecutor.run_in_thread(func, item, **kwargs)
+            
+            # 添加进度跟踪
+            task = task.add_done_callback(lambda f, idx=i: progress_tracker(f.result() if not f.exception() else None, idx))
             tasks.append(task)
 
-        return await AsyncExecutor.gather_with_concurrency(
-            max_concurrency, 
-            *tasks, 
-            ignore_exceptions=ignore_exceptions
-        )
+        try:
+            return await AsyncExecutor.gather_with_concurrency(
+                max_concurrency, 
+                *tasks, 
+                ignore_exceptions=ignore_exceptions
+            )
+        except asyncio.CancelledError:
+            logger.warning("并行执行任务被取消")
+            # 确保所有任务被取消
+            for task in tasks:
+                if not task.done() and not task.cancelled():
+                    task.cancel()
+            # 等待所有任务完成取消操作
+            await asyncio.gather(*[asyncio.create_task(asyncio.shield(task)) for task in tasks], return_exceptions=True)
+            raise
+        except Exception as e:
+            logger.error(f"并行执行过程中发生错误: {str(e)}")
+            if not ignore_exceptions:
+                raise
+            return []

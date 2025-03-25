@@ -49,23 +49,34 @@ def run_shell_script_with_os(shell_path, *args):
         logger.error(f"Shell command execution error: {cmd}, error: {str(e)}")
         return False
 
-def run_shell_script_with_subprocess(shell_path, *args, capture_output=False):
+def run_shell_script_with_subprocess(shell_path, *args, capture_output=False, timeout=60):
     cmd = [shell_path] + list(args)
     try:
+        if not os.path.exists(shell_path):
+            logger.error(f"脚本文件不存在: {shell_path}")
+            return False, None
+            
+        # 确保脚本有执行权限
+        ensure_file_permissions(shell_path, 0o755)
+        
         if capture_output:
-            result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, 
+                                   stderr=subprocess.PIPE, text=True, timeout=timeout)
             return True, result.stdout
         else:
-            subprocess.run(cmd, check=True)
+            subprocess.run(cmd, check=True, timeout=timeout)
             return True, None
+    except subprocess.TimeoutExpired:
+        logger.error(f"命令执行超时 ({timeout}秒): {cmd}")
+        return False, "命令执行超时"
     except subprocess.CalledProcessError as e:
-        logger.error(f"Shell command execution failed: {e}")
+        logger.error(f"命令执行失败: {e}, 退出码: {e.returncode}")
         if capture_output:
             return False, e.stderr
         else:
             return False, None
     except Exception as e:
-        logger.error(f"Shell command execution error: {str(e)}")
+        logger.error(f"命令执行错误: {str(e)}")
         return False, None
 
 def overwrite_msg_to_file(msg, file_path):
@@ -166,17 +177,24 @@ def check_file_exists(file_path):
     return os.path.exists(file_path)
 
 def ensure_file_permissions(file_path, permission=0o644):
-    if os.path.exists(file_path):
-        try:
-            current_mode = os.stat(file_path).st_mode
-            if (current_mode & 0o777) != permission:
-                logger.info(f"修正文件权限: {file_path}")
-                os.chmod(file_path, permission)
-            return True
-        except Exception as e:
-            logger.error(f"设置文件权限失败: {str(e)}")
+    try:
+        if not os.path.exists(file_path):
+            # 检查父目录是否存在
+            parent_dir = os.path.dirname(file_path)
+            if parent_dir and not os.path.exists(parent_dir):
+                os.makedirs(parent_dir, exist_ok=True)
+                os.chmod(parent_dir, 0o755)
+                logger.info(f"创建目录并设置权限: {parent_dir}")
             return False
-    return False
+            
+        current_mode = os.stat(file_path).st_mode
+        if (current_mode & 0o777) != permission:
+            logger.info(f"修正文件权限: {file_path}")
+            os.chmod(file_path, permission)
+        return True
+    except Exception as e:
+        logger.error(f"设置文件权限失败: {str(e)}")
+        return False
 
 def parse_heart_beat_extra_info(info):
     if not info:

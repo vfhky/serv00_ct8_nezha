@@ -139,22 +139,40 @@ async def main_async():
         serv00_ct8_dir = os.path.dirname(os.path.abspath(__file__))
         utils_sh_file = utils.get_serv00_dir_file(serv00_ct8_dir, 'scripts/utils.sh')
 
-        # 检查utils.sh脚本是否存在
+        # 检查utils.sh脚本是否存在和权限
         if not os.path.exists(utils_sh_file):
             print(f"错误: 工具脚本不存在: {utils_sh_file}")
+            logger.error(f"工具脚本不存在: {utils_sh_file}")
             return
-        else:
-            # 确保脚本有执行权限
-            utils.ensure_file_permissions(utils_sh_file, 0o755)
+        
+        # 确保脚本有执行权限
+        if not utils.ensure_file_permissions(utils_sh_file, 0o755):
+            print(f"警告: 无法设置脚本权限: {utils_sh_file}")
+            logger.warning(f"无法设置脚本权限: {utils_sh_file}")
 
         # 生成配置文件
         print(f"===> 从[config]目录生成配置文件...")
-        if not utils.run_shell_script_with_os(utils_sh_file, 'rename_config', utils.get_serv00_config_dir(serv00_ct8_dir)):
+        config_dir = utils.get_serv00_config_dir(serv00_ct8_dir)
+        
+        # 确保配置目录存在
+        if not os.path.exists(config_dir):
+            try:
+                os.makedirs(config_dir, exist_ok=True)
+                os.chmod(config_dir, 0o755)
+                logger.info(f"创建配置目录: {config_dir}")
+            except Exception as e:
+                print(f"错误: 无法创建配置目录: {str(e)}")
+                logger.error(f"无法创建配置目录: {str(e)}")
+                return
+        
+        if not utils.run_shell_script_with_os(utils_sh_file, 'rename_config', config_dir):
             print(f"===> 从[config]目录生成配置文件失败，请检查serv00是否开启允许应用....")
+            logger.error("配置文件生成失败")
             return
 
         print(f"===> 从[config]目录生成配置文件成功....")
 
+        # 定义配置文件路径
         sys_config_file = utils.get_serv00_config_file(serv00_ct8_dir, 'sys.conf')
         host_config_file = utils.get_serv00_config_file(serv00_ct8_dir, 'host.conf')
         monitor_config_file = utils.get_serv00_config_file(serv00_ct8_dir, 'monitor.conf')
@@ -173,39 +191,67 @@ async def main_async():
         
         if missing_files:
             print(f"警告: 以下配置文件不存在: {', '.join(missing_files)}")
+            logger.warning(f"缺少配置文件: {', '.join(missing_files)}")
             print("请确保config目录中包含必要的配置模板文件")
         
         # 加载系统配置
+        sys_config = None
         try:
-            SysConfigEntry(sys_config_file)
+            sys_config = SysConfigEntry(sys_config_file)
+            logger.info("系统配置加载成功")
         except Exception as e:
             print(f"警告: 加载系统配置失败: {str(e)}")
             logger.warning(f"加载系统配置失败: {str(e)}")
 
         # 初始化
-        utils.run_shell_script_with_os(utils_sh_file, "init")
+        print("===> 正在初始化环境...")
+        try:
+            if not utils.run_shell_script_with_os(utils_sh_file, "init"):
+                print("警告: 环境初始化可能不完整")
+                logger.warning("环境初始化可能不完整")
+        except Exception as e:
+            print(f"警告: 环境初始化出错: {str(e)}")
+            logger.warning(f"环境初始化出错: {str(e)}")
 
         # 生成ed25519密钥对
         if utils.prompt_user_input("生成私钥(一般是安装面板需要生成，安装agent时不需要)"):
-            if not gen_ed25519(utils_sh_file, ssh_dir):
-                print("警告: 生成密钥对失败，但将继续执行后续步骤")
+            try:
+                if not gen_ed25519(utils_sh_file, ssh_dir):
+                    print("警告: 生成密钥对失败，但将继续执行后续步骤")
+                    logger.warning("生成密钥对失败")
+            except Exception as e:
+                print(f"警告: 生成密钥对时出错: {str(e)}")
+                logger.warning(f"生成密钥对时出错: {str(e)}")
 
         # 初始化配置并连接所有主机
         print("===> 开始连接host.conf中配置的相互保活的主机....")
+        config_entries = []
         try:
-            host_config = HostConfigEntry(host_config_file, private_key_file)
-            config_entries = host_config.get_entries()
+            if os.path.exists(host_config_file):
+                host_config = HostConfigEntry(host_config_file, private_key_file)
+                config_entries = host_config.get_entries()
+                logger.info(f"已加载{len(config_entries)}个主机配置")
+            else:
+                print(f"警告: 主机配置文件不存在: {host_config_file}")
+                logger.warning(f"主机配置文件不存在: {host_config_file}")
         except Exception as e:
             print(f"警告: 加载主机配置失败: {str(e)}")
             logger.warning(f"加载主机配置失败: {str(e)}")
-            config_entries = []
 
         # sshd公私钥文件拷贝
         if config_entries and utils.prompt_user_input("拷贝公私钥到相互保活的主机(一般是首次安装面板才需要)"):
-            await transfer_ssh_dir_to_all_hosts(config_entries, host_name, user_name, ssh_dir)
+            try:
+                await transfer_ssh_dir_to_all_hosts(config_entries, host_name, user_name, ssh_dir)
+            except Exception as e:
+                print(f"警告: 拷贝SSH密钥时出错: {str(e)}")
+                logger.warning(f"拷贝SSH密钥时出错: {str(e)}")
 
         # 生成所有主机的保活配置
-        await gen_all_hosts_heart_beat_config(utils_sh_file, heart_beat_config_file, config_entries, host_name, user_name)
+        try:
+            await gen_all_hosts_heart_beat_config(utils_sh_file, heart_beat_config_file, config_entries, host_name, user_name)
+        except Exception as e:
+            print(f"警告: 生成心跳配置时出错: {str(e)}")
+            logger.warning(f"生成心跳配置时出错: {str(e)}")
 
         # 安装选择
         print("\n请选择安装选项:")
@@ -217,25 +263,30 @@ async def main_async():
         print("0. 退出")
         
         nezha_opt = input("请输入选项编号: ")
-        if nezha_opt == "1":
-            utils.run_shell_script_with_os(utils_sh_file, "install", "dashboard", dashboard_dir, monitor_config_file)
-        elif nezha_opt == "2":
-            utils.run_shell_script_with_os(utils_sh_file, "install", "agent", agent_dir, monitor_config_file)
-        elif nezha_opt == "3":
-            utils.run_shell_script_with_os(utils_sh_file, "install", "both", utils.get_app_dir(user_name), monitor_config_file)
-        elif nezha_opt == "4":
-            if utils.prompt_user_input("确认清理哪吒面板"):
-                utils.run_shell_script_with_os(utils_sh_file, "clean", "dashboard", dashboard_dir)
-        elif nezha_opt == "5":
-            if utils.prompt_user_input("确认清理Agent"):
-                utils.run_shell_script_with_os(utils_sh_file, "clean", "agent", agent_dir)
-        else:
-            print("已取消操作")
+        try:
+            if nezha_opt == "1":
+                utils.run_shell_script_with_os(utils_sh_file, "install", "dashboard", dashboard_dir, monitor_config_file)
+            elif nezha_opt == "2":
+                utils.run_shell_script_with_os(utils_sh_file, "install", "agent", agent_dir, monitor_config_file)
+            elif nezha_opt == "3":
+                utils.run_shell_script_with_os(utils_sh_file, "install", "both", utils.get_app_dir(user_name), monitor_config_file)
+            elif nezha_opt == "4":
+                if utils.prompt_user_input("确认清理哪吒面板"):
+                    utils.run_shell_script_with_os(utils_sh_file, "clean", "dashboard", dashboard_dir)
+            elif nezha_opt == "5":
+                if utils.prompt_user_input("确认清理Agent"):
+                    utils.run_shell_script_with_os(utils_sh_file, "clean", "agent", agent_dir)
+            else:
+                print("已取消操作")
+        except Exception as e:
+            print(f"错误: 执行安装/清理操作失败: {str(e)}")
+            logger.error(f"执行安装/清理操作失败: {str(e)}")
 
         print("=======> 安装结束")
         
     except KeyboardInterrupt:
         print("\n操作被用户中断")
+        logger.info("操作被用户中断")
     except Exception as e:
         error_message = f"程序执行出错: {str(e)}"
         print(f"错误: {error_message}")

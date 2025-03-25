@@ -4,11 +4,13 @@ import shlex
 import functools
 from time import time
 from getpass import getuser
-
-from logger_wrapper import LoggerWrapper
-
+import logging
 
 # 初始化日志记录器
+# 避免使用 from logger_wrapper import LoggerWrapper 避免循环导入
+from .logger_wrapper import LoggerWrapper
+
+# 当前模块使用的logger
 logger = LoggerWrapper()
 
 def time_count(func):
@@ -35,19 +37,26 @@ def get_shell_run_cmd(shell_path, *args):
 
 def run_shell_script_with_os(shell_path, *args):
     cmd = get_shell_run_cmd(shell_path, *args)
-    result = os.system(cmd)
-
-    if result == 0:
-        logger.info(f"Shell command executed successfully: {cmd}")
-        return True
-    else:
-        logger.error(f"Shell command execution failed with exit code {result}: {cmd}")
+    try:
+        result = os.system(cmd)
+        if result == 0:
+            logger.info(f"Shell command executed successfully: {cmd}")
+            return True
+        else:
+            logger.error(f"Shell command execution failed with exit code {result}: {cmd}")
+            return False
+    except Exception as e:
+        logger.error(f"Shell command execution error: {cmd}, error: {str(e)}")
         return False
 
-
 def overwrite_msg_to_file(msg, file_path):
-    with open(file_path, "w", encoding="utf-8") as file:
-        file.write(str(msg))
+    try:
+        with open(file_path, "w", encoding="utf-8") as file:
+            file.write(str(msg))
+        return True
+    except Exception as e:
+        logger.error(f"Error writing to file {file_path}: {str(e)}")
+        return False
 
 def get_hostname_and_username():
     hostname = socket.gethostname()
@@ -106,12 +115,16 @@ def parse_heart_beat_extra_info(info):
         return None
 
     opt, hostname, port, username = parts
-    return {
-        "type": opt,
-        "hostname": hostname,
-        "port": int(port),
-        "username": username
-    }
+    try:
+        return {
+            "type": opt,
+            "hostname": hostname,
+            "port": int(port),
+            "username": username
+        }
+    except ValueError:
+        logger.error(f"Invalid heart beat info format: {info}")
+        return None
 
 def make_heart_beat_extra_info(info, host_name, user_name):
     if not info:
@@ -130,9 +143,16 @@ def prompt_user_input(msg):
     valid_inputs = {'y', 'n'}
 
     while True:
-        user_input = input(f"是否{msg}? (y/n): ").strip().lower()
+        try:
+            user_input = input(f"是否{msg}? (y/n): ").strip().lower()
 
-        if user_input in valid_inputs:
-            return user_input == 'y'
-        else:
-            logger.info("无效输入，请输入 Y 或者 y 执行，N 或者 n 不执行")
+            if user_input in valid_inputs:
+                return user_input == 'y'
+            else:
+                logger.info("无效输入，请输入 Y 或者 y 执行，N 或者 n 不执行")
+        except KeyboardInterrupt:
+            print("\n操作已取消")
+            return False
+        except Exception as e:
+            logger.error(f"获取用户输入出错: {str(e)}")
+            return False

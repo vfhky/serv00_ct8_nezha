@@ -2,15 +2,15 @@ import os
 import socket
 import shlex
 import functools
+import stat
 from time import time
 from getpass import getuser
 import logging
+import subprocess
 
-# 初始化日志记录器
 # 避免使用 from logger_wrapper import LoggerWrapper 避免循环导入
 from .logger_wrapper import LoggerWrapper
 
-# 当前模块使用的logger
 logger = LoggerWrapper()
 
 def time_count(func):
@@ -49,10 +49,37 @@ def run_shell_script_with_os(shell_path, *args):
         logger.error(f"Shell command execution error: {cmd}, error: {str(e)}")
         return False
 
+def run_shell_script_with_subprocess(shell_path, *args, capture_output=False):
+    cmd = [shell_path] + list(args)
+    try:
+        if capture_output:
+            result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            return True, result.stdout
+        else:
+            subprocess.run(cmd, check=True)
+            return True, None
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Shell command execution failed: {e}")
+        if capture_output:
+            return False, e.stderr
+        else:
+            return False, None
+    except Exception as e:
+        logger.error(f"Shell command execution error: {str(e)}")
+        return False, None
+
 def overwrite_msg_to_file(msg, file_path):
     try:
+        # 确保目录存在
+        dir_path = os.path.dirname(file_path)
+        if dir_path and not os.path.exists(dir_path):
+            os.makedirs(dir_path, exist_ok=True)
+            os.chmod(dir_path, 0o755)
+            
         with open(file_path, "w", encoding="utf-8") as file:
             file.write(str(msg))
+        
+        os.chmod(file_path, 0o644)
         return True
     except Exception as e:
         logger.error(f"Error writing to file {file_path}: {str(e)}")
@@ -70,28 +97,60 @@ def get_user_home_dir(user_name):
     return os.path.join('/home', user_name)
 
 def get_ssh_dir(user_name):
-    return os.path.join(get_user_home_dir(user_name), '.ssh')
+    ssh_dir = os.path.join(get_user_home_dir(user_name), '.ssh')
+    
+    # 确保目录存在
+    if not os.path.exists(ssh_dir):
+        try:
+            os.makedirs(ssh_dir, exist_ok=True)
+            # SSH目录需要700权限
+            os.chmod(ssh_dir, 0o700)
+        except Exception as e:
+            logger.error(f"创建SSH目录失败: {str(e)}")
+    
+    return ssh_dir
 
 def get_app_dir(user_name):
-    return os.path.join(get_user_home_dir(user_name), 'nezha_app')
+    app_dir = os.path.join(get_user_home_dir(user_name), 'nezha_app')
+    
+    if not os.path.exists(app_dir):
+        try:
+            os.makedirs(app_dir, exist_ok=True)
+            os.chmod(app_dir, 0o755)
+        except Exception as e:
+            logger.error(f"创建应用目录失败: {str(e)}")
+    
+    return app_dir
 
 def get_dashboard_dir(user_name):
     return os.path.join(get_app_dir(user_name), 'dashboard')
 
 def get_dashboard_config_file(user_name):
     config_dir = get_dashboard_dir(user_name)
-    return os.path.join(config_dir, 'data/config.yaml')
+    return os.path.join(config_dir, 'data', 'config.yaml')
 
 def get_dashboard_db_file(user_name):
     dashboard_dir = get_dashboard_dir(user_name)
-    return os.path.join(dashboard_dir, 'data/sqlite.db')
+    return os.path.join(dashboard_dir, 'data', 'sqlite.db')
 
 def get_agent_dir(user_name):
     return os.path.join(get_app_dir(user_name), 'agent')
 
 def get_ssh_ed25519_pri(user_name):
     ssh_dir = get_ssh_dir(user_name)
-    return os.path.expanduser(os.path.join(ssh_dir, 'id_ed25519'))
+    private_key_file = os.path.join(ssh_dir, 'id_ed25519')
+    
+    # 检查私钥权限
+    if os.path.exists(private_key_file):
+        try:
+            current_mode = os.stat(private_key_file).st_mode
+            if (current_mode & 0o777) != 0o600:
+                logger.warning(f"私钥文件权限不正确，正在修复: {private_key_file}")
+                os.chmod(private_key_file, 0o600)
+        except Exception as e:
+            logger.error(f"无法设置私钥文件权限: {str(e)}")
+    
+    return private_key_file
 
 def get_serv00_config_dir(serv00_ct8_dir):
     return os.path.join(serv00_ct8_dir, 'config')
@@ -105,6 +164,19 @@ def get_serv00_dir_file(serv00_ct8_dir, file_name):
 
 def check_file_exists(file_path):
     return os.path.exists(file_path)
+
+def ensure_file_permissions(file_path, permission=0o644):
+    if os.path.exists(file_path):
+        try:
+            current_mode = os.stat(file_path).st_mode
+            if (current_mode & 0o777) != permission:
+                logger.info(f"修正文件权限: {file_path}")
+                os.chmod(file_path, permission)
+            return True
+        except Exception as e:
+            logger.error(f"设置文件权限失败: {str(e)}")
+            return False
+    return False
 
 def parse_heart_beat_extra_info(info):
     if not info:

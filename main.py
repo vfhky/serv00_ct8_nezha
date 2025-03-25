@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 import os
 import sys
-from time import sleep
+import signal
+import time
 from typing import List, Dict, Optional
 import asyncio
-import signal
 import traceback
+import atexit
 
 # 确保 src 目录在系统路径中
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -13,23 +14,29 @@ sys.path.insert(0, current_dir)
 
 from src.config.host_config_entry import HostConfigEntry
 from src.config.sys_config_entry import SysConfigEntry
-from src.utils.async_utils import AsyncExecutor
+from src.utils.async_utils import AsyncExecutor, shutdown_thread_pool
 import src.utils.utils as utils
 from src.utils.logger_wrapper import LoggerWrapper
 
-# 初始化全局日志记录器
+# 初始化日志
 logger = LoggerWrapper()
 
 # 全局变量
 shutdown_event = asyncio.Event()
 
-# 设置信号处理函数，优雅退出
+# 注册清理函数
+@atexit.register
+def cleanup():
+    logger.info("执行退出清理操作...")
+    shutdown_thread_pool()
+    logger.info("清理操作完成")
+
+# 信号处理
 def handle_shutdown_signal(signum, frame):
     print(f"\n收到信号 {signum}，正在优雅退出...")
     shutdown_event.set()
 
 async def transfer_ssh_file_to_host(entry: Dict, host_name: str, user_name: str, local_dir: str, host_id: int) -> None:
-    """向单个主机传输SSH文件"""
     client = entry.get('client')
     if not client:
         print(f"==> [{host_id}]号主机未连接成功 [{entry['username']}@{entry['hostname']}:{entry['port']}]")
@@ -50,18 +57,19 @@ async def transfer_ssh_file_to_host(entry: Dict, host_name: str, user_name: str,
         logger.error(error_msg)
 
 async def transfer_ssh_dir_to_all_hosts(config_entries: List[Dict], host_name: str, user_name: str, local_dir: str) -> None:
-    """异步并行向所有主机传输SSH目录"""
+    if not config_entries:
+        print("警告: 没有配置任何主机，跳过SSH目录传输")
+        return
+        
     tasks = []
     for host_id, entry in enumerate(config_entries, 1):
         task = transfer_ssh_file_to_host(entry, host_name, user_name, local_dir, host_id)
         tasks.append(task)
 
-    # 并行执行所有传输任务，最多3个并发，忽略单个失败
     await AsyncExecutor.gather_with_concurrency(3, *tasks, ignore_exceptions=True)
 
 async def gen_host_heart_beat_config(utils_sh_file: str, heart_beat_config_file: str, entry: Dict,
                                      host_name: str, user_name: str, host_id: int) -> None:
-    """为单个主机生成心跳配置"""
     if host_name == entry["hostname"] and user_name == entry["username"]:
         print(f"====> [{host_id}]号主机[{user_name}@{host_name}]是当前主机，跳过不处理")
         return
@@ -84,7 +92,10 @@ async def gen_host_heart_beat_config(utils_sh_file: str, heart_beat_config_file:
 
 async def gen_all_hosts_heart_beat_config(utils_sh_file: str, heart_beat_config_file: str, config_entries: List[Dict],
                                          host_name: str, user_name: str) -> None:
-    """异步并行为所有主机生成心跳配置"""
+    if not config_entries:
+        print("警告: 没有配置任何主机，跳过心跳配置生成")
+        return
+        
     print(f"==> 开始把所有主机信息写入到心跳配置文件中{heart_beat_config_file}")
 
     tasks = []
@@ -95,26 +106,23 @@ async def gen_all_hosts_heart_beat_config(utils_sh_file: str, heart_beat_config_
         )
         tasks.append(task)
 
-    # 并行执行所有配置生成任务，忽略单个任务失败
     await AsyncExecutor.gather_with_concurrency(5, *tasks, ignore_exceptions=True)
 
 def gen_ed25519(utils_sh_file: str, ssh_dir: str) -> bool:
-    """
-    生成ED25519 SSH密钥对
-    
-    Args:
-        utils_sh_file: 工具脚本路径
-        ssh_dir: SSH配置目录
-        
-    Returns:
-        bool: 是否成功生成
-    """
+    # 确保目录存在
+    if not os.path.exists(ssh_dir):
+        try:
+            os.makedirs(ssh_dir, exist_ok=True)
+            os.chmod(ssh_dir, 0o700)
+        except Exception as e:
+            logger.error(f"创建SSH目录失败: {str(e)}")
+            return False
+            
     print(f"===> 开始生成ed25519密钥对，密钥保存在{ssh_dir}目录...")
     return utils.run_shell_script_with_os(utils_sh_file, "keygen", ssh_dir)
 
 @utils.time_count
 async def main_async():
-    """异步主函数"""
     try:
         host_name, user_name = utils.get_hostname_and_username()
         print(f"===> 当前主机: {host_name}, 用户: {user_name}")
@@ -135,6 +143,9 @@ async def main_async():
         if not os.path.exists(utils_sh_file):
             print(f"错误: 工具脚本不存在: {utils_sh_file}")
             return
+        else:
+            # 确保脚本有执行权限
+            utils.ensure_file_permissions(utils_sh_file, 0o755)
 
         # 生成配置文件
         print(f"===> 从[config]目录生成配置文件...")
@@ -149,8 +160,27 @@ async def main_async():
         monitor_config_file = utils.get_serv00_config_file(serv00_ct8_dir, 'monitor.conf')
         heart_beat_config_file = utils.get_serv00_config_file(serv00_ct8_dir, 'heartbeat.conf')
 
+        # 检查配置文件
+        missing_files = []
+        for file_path, file_desc in [
+            (sys_config_file, "系统配置"),
+            (host_config_file, "主机配置"),
+            (monitor_config_file, "监控配置"),
+            (heart_beat_config_file, "心跳配置")
+        ]:
+            if not os.path.exists(file_path):
+                missing_files.append(f"{file_desc}文件({file_path})")
+        
+        if missing_files:
+            print(f"警告: 以下配置文件不存在: {', '.join(missing_files)}")
+            print("请确保config目录中包含必要的配置模板文件")
+        
         # 加载系统配置
-        SysConfigEntry(sys_config_file)
+        try:
+            SysConfigEntry(sys_config_file)
+        except Exception as e:
+            print(f"警告: 加载系统配置失败: {str(e)}")
+            logger.warning(f"加载系统配置失败: {str(e)}")
 
         # 初始化
         utils.run_shell_script_with_os(utils_sh_file, "init")
@@ -162,18 +192,31 @@ async def main_async():
 
         # 初始化配置并连接所有主机
         print("===> 开始连接host.conf中配置的相互保活的主机....")
-        host_config = HostConfigEntry(host_config_file, private_key_file)
-        config_entries = host_config.get_entries()
+        try:
+            host_config = HostConfigEntry(host_config_file, private_key_file)
+            config_entries = host_config.get_entries()
+        except Exception as e:
+            print(f"警告: 加载主机配置失败: {str(e)}")
+            logger.warning(f"加载主机配置失败: {str(e)}")
+            config_entries = []
 
         # sshd公私钥文件拷贝
-        if utils.prompt_user_input("拷贝公私钥到相互保活的主机(一般是首次安装面板才需要)"):
+        if config_entries and utils.prompt_user_input("拷贝公私钥到相互保活的主机(一般是首次安装面板才需要)"):
             await transfer_ssh_dir_to_all_hosts(config_entries, host_name, user_name, ssh_dir)
 
         # 生成所有主机的保活配置
         await gen_all_hosts_heart_beat_config(utils_sh_file, heart_beat_config_file, config_entries, host_name, user_name)
 
         # 安装选择
-        nezha_opt = input("请选择安装选项(1.安装哪吒面板 2.安装agent客户端 3.安装面板+agent 4.清理哪吒面板 5.清理Agent 0.退出): ")
+        print("\n请选择安装选项:")
+        print("1. 安装哪吒面板")
+        print("2. 安装agent客户端")
+        print("3. 安装面板+agent")
+        print("4. 清理哪吒面板")
+        print("5. 清理Agent")
+        print("0. 退出")
+        
+        nezha_opt = input("请输入选项编号: ")
         if nezha_opt == "1":
             utils.run_shell_script_with_os(utils_sh_file, "install", "dashboard", dashboard_dir, monitor_config_file)
         elif nezha_opt == "2":
@@ -181,9 +224,13 @@ async def main_async():
         elif nezha_opt == "3":
             utils.run_shell_script_with_os(utils_sh_file, "install", "both", utils.get_app_dir(user_name), monitor_config_file)
         elif nezha_opt == "4":
-            utils.run_shell_script_with_os(utils_sh_file, "clean", "dashboard", dashboard_dir)
+            if utils.prompt_user_input("确认清理哪吒面板"):
+                utils.run_shell_script_with_os(utils_sh_file, "clean", "dashboard", dashboard_dir)
         elif nezha_opt == "5":
-            utils.run_shell_script_with_os(utils_sh_file, "clean", "agent", agent_dir)
+            if utils.prompt_user_input("确认清理Agent"):
+                utils.run_shell_script_with_os(utils_sh_file, "clean", "agent", agent_dir)
+        else:
+            print("已取消操作")
 
         print("=======> 安装结束")
         
@@ -198,10 +245,10 @@ async def main_async():
 
 @utils.time_count
 def main():
-    """同步入口函数，启动异步事件循环"""
-    # 设置信号处理，支持优雅退出
+    # 设置信号处理
     signal.signal(signal.SIGINT, handle_shutdown_signal)
     signal.signal(signal.SIGTERM, handle_shutdown_signal)
+    signal.signal(signal.SIGHUP, handle_shutdown_signal)
 
     try:
         asyncio.run(main_async())

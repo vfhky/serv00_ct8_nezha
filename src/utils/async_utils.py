@@ -4,11 +4,22 @@ import concurrent.futures
 from typing import List, Callable, Any, Dict, TypeVar, Optional, Union
 from functools import partial
 import time
+import contextlib
 
 from ..utils.logger_wrapper import LoggerWrapper
 
 logger = LoggerWrapper()
 T = TypeVar('T')
+
+# 全局线程池
+_thread_pool = concurrent.futures.ThreadPoolExecutor()
+
+def shutdown_thread_pool():
+    global _thread_pool
+    if _thread_pool:
+        logger.info("正在关闭线程池...")
+        _thread_pool.shutdown(wait=True)
+        logger.info("线程池已关闭")
 
 class AsyncExecutor:
     """通用异步执行器，用于并行处理多个相似的任务"""
@@ -17,11 +28,10 @@ class AsyncExecutor:
     async def run_in_thread(func, *args, **kwargs):
         """在线程池中运行同步函数"""
         loop = asyncio.get_event_loop()
-        with concurrent.futures.ThreadPoolExecutor() as pool:
-            return await loop.run_in_executor(
-                pool,
-                partial(func, *args, **kwargs)
-            )
+        return await loop.run_in_executor(
+            _thread_pool,
+            partial(func, *args, **kwargs)
+        )
 
     @staticmethod
     async def run_in_thread_with_timeout(func, timeout: float, *args, **kwargs):
@@ -31,6 +41,9 @@ class AsyncExecutor:
             return await asyncio.wait_for(task, timeout)
         except asyncio.TimeoutError:
             logger.error(f"函数 {func.__name__} 执行超时（{timeout}秒）")
+            raise
+        except asyncio.CancelledError:
+            logger.warning(f"函数 {func.__name__} 被取消")
             raise
         except Exception as e:
             logger.error(f"函数 {func.__name__} 执行异常: {str(e)}")
@@ -48,16 +61,30 @@ class AsyncExecutor:
         """
         semaphore = asyncio.Semaphore(n)
         results = []
+        pending_tasks = set()
 
         async def _sem_task(task_id, task):
+            nonlocal pending_tasks
             try:
                 async with semaphore:
+                    # 记录任务开始时间
                     start_time = time.time()
-                    result = await task
-                    elapsed = time.time() - start_time
-                    if elapsed > 5.0:  # 记录执行时间超过5秒的任务
-                        logger.info(f"Task {task_id} 完成, 耗时: {elapsed:.2f}秒")
-                    return result
+                    
+                    # 创建任务并添加到待处理集合
+                    current_task = asyncio.create_task(task)
+                    pending_tasks.add(current_task)
+                    
+                    try:
+                        # 等待任务完成
+                        result = await current_task
+                        # 计算并记录执行时间
+                        elapsed = time.time() - start_time
+                        if elapsed > 5.0:  # 记录执行时间超过5秒的任务
+                            logger.info(f"Task {task_id} 完成, 耗时: {elapsed:.2f}秒")
+                        return result
+                    finally:
+                        # 无论任务是否成功完成，都从待处理集合中移除
+                        pending_tasks.discard(current_task)
             except Exception as e:
                 logger.error(f"Task {task_id} 异常: {str(e)}")
                 if ignore_exceptions:
@@ -68,12 +95,55 @@ class AsyncExecutor:
         task_list = [_sem_task(i, task) for i, task in enumerate(tasks)]
         
         # 使用异常处理，防止一个任务失败导致所有任务失败
-        if ignore_exceptions:
-            results = await asyncio.gather(*task_list, return_exceptions=True)
-            # 过滤出成功的结果
-            return [r for r in results if not isinstance(r, Exception) and r is not None]
-        else:
-            return await asyncio.gather(*task_list)
+        try:
+            if ignore_exceptions:
+                results = await asyncio.gather(*task_list, return_exceptions=True)
+                # 过滤出成功的结果
+                return [r for r in results if not isinstance(r, Exception) and r is not None]
+            else:
+                return await asyncio.gather(*task_list)
+        except asyncio.CancelledError:
+            # 如果gather被取消，确保取消所有挂起的任务
+            for task in pending_tasks:
+                if not task.done():
+                    task.cancel()
+            # 等待所有任务完成取消操作
+            await asyncio.gather(*pending_tasks, return_exceptions=True)
+            raise
+        finally:
+            # 确保所有任务都被适当清理
+            for task in task_list:
+                if not task.done() and not task.cancelled():
+                    task.cancel()
+
+    @staticmethod
+    @contextlib.asynccontextmanager
+    async def timeout_context(timeout_seconds):
+        """
+        创建一个超时上下文管理器，可以在代码块内使用
+        
+        示例:
+            async with AsyncExecutor.timeout_context(5):
+                # 这段代码必须在5秒内完成，否则会引发TimeoutError
+                await some_async_operation()
+        """
+        try:
+            # 创建一个可取消的任务
+            task = asyncio.current_task()
+            # 设置超时
+            timer_handle = asyncio.get_event_loop().call_later(
+                timeout_seconds, task.cancel
+            )
+            yield
+        except asyncio.CancelledError:
+            # 检查是否由超时引起的取消
+            if timer_handle.when() <= asyncio.get_event_loop().time():
+                logger.error(f"操作超时（{timeout_seconds}秒）")
+                raise asyncio.TimeoutError(f"操作超时（{timeout_seconds}秒）")
+            raise
+        finally:
+            # 清理定时器
+            timer_handle.cancel()
 
     @staticmethod
     async def execute_parallel(items: List[Any],
@@ -96,6 +166,9 @@ class AsyncExecutor:
         Returns:
             处理结果列表
         """
+        if not items:
+            return []
+            
         tasks = []
         for item in items:
             if timeout is not None:

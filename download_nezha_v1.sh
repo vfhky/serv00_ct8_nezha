@@ -235,7 +235,7 @@ EOF
         sed -i '' "s/your_gitee_client_secret/${gitee_client_secret}/" "${config_file}"
     fi
 
-    mkdir -p $NZ_DASHBOARD_PATH/data  2>/dev/null 
+    mkdir -p $NZ_DASHBOARD_PATH/data  2>/dev/null
     \mv -f "${config_file}" ${NZ_DASHBOARD_PATH}/data/config.yaml
 
     printf "===> 面板配置修改成功\n"
@@ -250,7 +250,7 @@ download_dashboard() {
 
     local version=$(curl -m 3 -sL "https://api.github.com/repos/vfhky/nezha-build/releases/latest" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
     if [ -z "${version}" ]; then
-        version=$(curl -m 3 -sL "https://ghapi.typecodes.us.kg?pj=vfhky/nezha-build" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
+        version=$(curl -m 3 -sL "https://ghapi.1024.cloudns.org?pj=vfhky/nezha-build" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g')
     fi
     if [ -z "${version}" ]; then
         version=$(curl -m 3 -sL "https://fastly.jsdelivr.net/gh/vfhky/nezha-build/" | grep "option\.value" | awk -F "'" '{print $2}' | sed 's/vfhky\/nezha-build@/v/g')

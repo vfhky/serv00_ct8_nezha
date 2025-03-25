@@ -2,5 +2,5 @@ cos_python_sdk_v5==1.9.31
 oss2==2.19.0
 paramiko==3.5.0
 pytz==2024.1
-qiniu==7.14.0
+qiniu==7.16.0
 Requests==2.32.3

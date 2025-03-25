@@ -244,6 +244,8 @@ download_dashboard() {
         \mv -f "$config_backup" "$config_file"
     fi
 
+    # 从version中提取版本号（去掉v前缀）
+    version_num=$(echo "${version}" | sed 's/^v//')
     echo "v=${version_num}" > "${install_path}/version.txt"
     \rm -rf "${install_path}"/app.zip
 

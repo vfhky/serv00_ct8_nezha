@@ -60,7 +60,7 @@ async def transfer_ssh_dir_to_all_hosts(config_entries: List[Dict], host_name: s
     if not config_entries:
         print("警告: 没有配置任何主机，跳过SSH目录传输")
         return
-        
+
     tasks = []
     for host_id, entry in enumerate(config_entries, 1):
         task = transfer_ssh_file_to_host(entry, host_name, user_name, local_dir, host_id)
@@ -74,7 +74,7 @@ async def gen_host_heart_beat_config(utils_sh_file: str, heart_beat_config_file:
         print(f"====> [{host_id}]号主机[{user_name}@{host_name}]是当前主机，跳过不处理")
         return
 
-    print(f"====> 开始把[{host_id}]号主机[{entry['username']}@{entry['hostname']}]写入到心跳配置文件中{heart_beat_config_file}")
+    print(f"====> 开始把[{host_id}]号主机[{user_name}@{host_name}]写入到心跳配置文件中{heart_beat_config_file}")
     try:
         result = await AsyncExecutor.run_in_thread(
             utils.run_shell_script_with_os,
@@ -95,7 +95,7 @@ async def gen_all_hosts_heart_beat_config(utils_sh_file: str, heart_beat_config_
     if not config_entries:
         print("警告: 没有配置任何主机，跳过心跳配置生成")
         return
-        
+
     print(f"==> 开始把所有主机信息写入到心跳配置文件中{heart_beat_config_file}")
 
     tasks = []
@@ -117,7 +117,7 @@ def gen_ed25519(utils_sh_file: str, ssh_dir: str) -> bool:
         except Exception as e:
             logger.error(f"创建SSH目录失败: {str(e)}")
             return False
-            
+
     print(f"===> 开始生成ed25519密钥对，密钥保存在{ssh_dir}目录...")
     return utils.run_shell_script_with_os(utils_sh_file, "keygen", ssh_dir)
 
@@ -144,7 +144,7 @@ async def main_async():
             print(f"错误: 工具脚本不存在: {utils_sh_file}")
             logger.error(f"工具脚本不存在: {utils_sh_file}")
             return
-        
+
         # 确保脚本有执行权限
         if not utils.ensure_file_permissions(utils_sh_file, 0o755):
             print(f"警告: 无法设置脚本权限: {utils_sh_file}")
@@ -153,7 +153,7 @@ async def main_async():
         # 生成配置文件
         print(f"===> 从[config]目录生成配置文件...")
         config_dir = utils.get_serv00_config_dir(serv00_ct8_dir)
-        
+
         # 确保配置目录存在
         if not os.path.exists(config_dir):
             try:
@@ -164,7 +164,7 @@ async def main_async():
                 print(f"错误: 无法创建配置目录: {str(e)}")
                 logger.error(f"无法创建配置目录: {str(e)}")
                 return
-        
+
         if not utils.run_shell_script_with_os(utils_sh_file, 'rename_config', config_dir):
             print(f"===> 从[config]目录生成配置文件失败，请检查serv00是否开启允许应用....")
             logger.error("配置文件生成失败")
@@ -188,12 +188,12 @@ async def main_async():
         ]:
             if not os.path.exists(file_path):
                 missing_files.append(f"{file_desc}文件({file_path})")
-        
+
         if missing_files:
             print(f"警告: 以下配置文件不存在: {', '.join(missing_files)}")
             logger.warning(f"缺少配置文件: {', '.join(missing_files)}")
             print("请确保config目录中包含必要的配置模板文件")
-        
+
         # 加载系统配置
         sys_config = None
         try:
@@ -261,7 +261,7 @@ async def main_async():
         print("4. 清理哪吒面板")
         print("5. 清理Agent")
         print("0. 退出")
-        
+
         nezha_opt = input("请输入选项编号: ")
         try:
             if nezha_opt == "1":
@@ -283,7 +283,7 @@ async def main_async():
             logger.error(f"执行安装/清理操作失败: {str(e)}")
 
         print("=======> 安装结束")
-        
+
     except KeyboardInterrupt:
         print("\n操作被用户中断")
         logger.info("操作被用户中断")

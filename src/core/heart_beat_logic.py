@@ -13,7 +13,7 @@ from ..config.sys_config_entry import SysConfigEntry
 from ..utils.logger_wrapper import LoggerWrapper
 from ..utils.async_utils import AsyncExecutor
 import src.utils.utils as utils
-from ..notification.notify_entry import NotifyEntry
+from ..notify.notify_entry import NotifyEntry
 from ..backup.backup_entry import BackupEntry
 
 # 常量定义
@@ -134,7 +134,7 @@ def load_configurations(serv00_ct8_dir: str) -> Tuple[SysConfigEntry, str]:
 async def main_async() -> None:
     """异步主函数"""
     try:
-        logger.info(f"==============> 开始心跳模块 <==============")
+        logger.info("==================== 开始心跳模块 ====================")
 
         host_name, user_name = utils.get_hostname_and_username()
         private_key_file = utils.get_ssh_ed25519_pri(user_name)

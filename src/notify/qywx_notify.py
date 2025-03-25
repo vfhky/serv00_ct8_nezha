@@ -2,8 +2,8 @@ import requests
 from datetime import datetime
 import pytz
 from typing import Dict
-from logger_wrapper import LoggerWrapper
-from sys_config_entry import SysConfigEntry
+from ..utils.logger_wrapper import LoggerWrapper
+from ..config.sys_config_entry import SysConfigEntry
 
 class QywxNotify:
     _instance = None

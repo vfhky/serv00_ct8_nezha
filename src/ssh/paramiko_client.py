@@ -1,14 +1,14 @@
 import paramiko
 import os
 from typing import Tuple, Dict, Any
-from logger_wrapper import LoggerWrapper
-from utils import get_shell_run_cmd
+from ..utils.logger_wrapper import LoggerWrapper
+from ..utils.utils import get_shell_run_cmd
 
 # 初始化日志记录器
 logger = LoggerWrapper()
 
 class ParamikoClient:
-    def __init__(self, hostname: str, port: int = 22, username: str = None, password: str = None, 
+    def __init__(self, hostname: str, port: int = 22, username: str = None, password: str = None,
                  ed25519_pri_file: str = None, timeout: int = 2, **kwargs):
         self.hostname = hostname
         self.port = port
@@ -93,7 +93,7 @@ class ParamikoClient:
             with self.client.open_sftp() as sftp:
                 self.ensure_remote_dir_exists(sftp, remote_dir)
                 logger.info(f"==> 开始拷贝[{local_dir}]目录到远程主机[{self.username}@{self.hostname}:{self.port}] [{remote_dir}]")
-                
+
                 for root, _, files in os.walk(local_dir):
                     for file in files:
                         local_file = os.path.join(root, file)
@@ -101,7 +101,7 @@ class ParamikoClient:
                         remote_file = os.path.join(remote_dir, relative_path)
 
                         self.ensure_remote_dir_exists(sftp, os.path.dirname(remote_file))
-                        sftp.put(local_file, remote_file, callback=lambda transferred, total: 
+                        sftp.put(local_file, remote_file, callback=lambda transferred, total:
                                  logger.info(f"====> 传输进度[{self.username}@{self.hostname}:{self.port}] [{local_file}]: {transferred}/{total} bytes"))
                         local_mode = os.stat(local_file).st_mode
                         sftp.chmod(remote_file, local_mode)
@@ -125,7 +125,7 @@ class ParamikoClient:
     def ssh_exec_script(self, script_file: str, *args: str) -> Tuple[int, str]:
         if not self.client:
             return -1, f"SSH client not connected [{self.username}@{self.hostname}:{self.port}]"
-        
+
         try:
             cmd = get_shell_run_cmd(script_file, *args)
             logger.info(f"==> 执行远程命令 [{self.username}@{self.hostname}:{self.port}]: {cmd}")

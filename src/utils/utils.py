@@ -55,29 +55,32 @@ def run_shell_script_with_subprocess(shell_path, *args, capture_output=False, ti
         if not os.path.exists(shell_path):
             logger.error(f"脚本文件不存在: {shell_path}")
             return False, None
-            
+
         # 确保脚本有执行权限
         ensure_file_permissions(shell_path, 0o755)
-        
+
         if capture_output:
-            result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, 
+            result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE, text=True, timeout=timeout)
             return True, result.stdout
         else:
             subprocess.run(cmd, check=True, timeout=timeout)
             return True, None
     except subprocess.TimeoutExpired:
-        logger.error(f"命令执行超时 ({timeout}秒): {cmd}")
-        return False, "命令执行超时"
+        error_msg = f"命令执行超时 ({timeout}秒): {cmd}"
+        logger.error(error_msg)
+        return False, error_msg
     except subprocess.CalledProcessError as e:
-        logger.error(f"命令执行失败: {e}, 退出码: {e.returncode}")
+        error_msg = f"命令执行失败: {e}, 退出码: {e.returncode}"
+        logger.error(error_msg)
         if capture_output:
             return False, e.stderr
         else:
-            return False, None
+            return False, error_msg
     except Exception as e:
-        logger.error(f"命令执行错误: {str(e)}")
-        return False, None
+        error_msg = f"命令执行错误: {str(e)}"
+        logger.error(error_msg)
+        return False, error_msg
 
 def overwrite_msg_to_file(msg, file_path):
     try:
@@ -86,10 +89,10 @@ def overwrite_msg_to_file(msg, file_path):
         if dir_path and not os.path.exists(dir_path):
             os.makedirs(dir_path, exist_ok=True)
             os.chmod(dir_path, 0o755)
-            
+
         with open(file_path, "w", encoding="utf-8") as file:
             file.write(str(msg))
-        
+
         os.chmod(file_path, 0o644)
         return True
     except Exception as e:
@@ -109,7 +112,7 @@ def get_user_home_dir(user_name):
 
 def get_ssh_dir(user_name):
     ssh_dir = os.path.join(get_user_home_dir(user_name), '.ssh')
-    
+
     # 确保目录存在
     if not os.path.exists(ssh_dir):
         try:
@@ -118,19 +121,19 @@ def get_ssh_dir(user_name):
             os.chmod(ssh_dir, 0o700)
         except Exception as e:
             logger.error(f"创建SSH目录失败: {str(e)}")
-    
+
     return ssh_dir
 
 def get_app_dir(user_name):
     app_dir = os.path.join(get_user_home_dir(user_name), 'nezha_app')
-    
+
     if not os.path.exists(app_dir):
         try:
             os.makedirs(app_dir, exist_ok=True)
             os.chmod(app_dir, 0o755)
         except Exception as e:
             logger.error(f"创建应用目录失败: {str(e)}")
-    
+
     return app_dir
 
 def get_dashboard_dir(user_name):
@@ -150,7 +153,7 @@ def get_agent_dir(user_name):
 def get_ssh_ed25519_pri(user_name):
     ssh_dir = get_ssh_dir(user_name)
     private_key_file = os.path.join(ssh_dir, 'id_ed25519')
-    
+
     # 检查私钥权限
     if os.path.exists(private_key_file):
         try:
@@ -160,7 +163,7 @@ def get_ssh_ed25519_pri(user_name):
                 os.chmod(private_key_file, 0o600)
         except Exception as e:
             logger.error(f"无法设置私钥文件权限: {str(e)}")
-    
+
     return private_key_file
 
 def get_serv00_config_dir(serv00_ct8_dir):
@@ -186,7 +189,7 @@ def ensure_file_permissions(file_path, permission=0o644):
                 os.chmod(parent_dir, 0o755)
                 logger.info(f"创建目录并设置权限: {parent_dir}")
             return False
-            
+
         current_mode = os.stat(file_path).st_mode
         if (current_mode & 0o777) != permission:
             logger.info(f"修正文件权限: {file_path}")

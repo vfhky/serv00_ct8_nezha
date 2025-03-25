@@ -2,8 +2,8 @@ import requests
 from typing import List, Optional, Dict
 from datetime import datetime
 import pytz
-from logger_wrapper import LoggerWrapper
-from sys_config_entry import SysConfigEntry
+from ..utils.logger_wrapper import LoggerWrapper
+from ..config.sys_config_entry import SysConfigEntry
 
 class QywxAppNotify:
     _instance = None

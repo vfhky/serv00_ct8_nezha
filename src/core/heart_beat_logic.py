@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
 import os
 import socket
+import asyncio
 from datetime import datetime
 from typing import Dict, Optional, Set, List, Tuple
 
 import requests
 import pytz
 
-from heart_beat_config_entry import HeartBeatConfigEntry
-from sys_config_entry import SysConfigEntry
-from logger_wrapper import LoggerWrapper
-import utils
-from notify_entry import NotifyEntry
-from backup_entry import BackupEntry
-
+from ..config.heart_beat_config_entry import HeartBeatConfigEntry
+from ..config.sys_config_entry import SysConfigEntry
+from ..utils.logger_wrapper import LoggerWrapper
+from ..utils.async_utils import AsyncExecutor
+import src.utils.utils as utils
+from ..notification.notify_entry import NotifyEntry
+from ..backup.backup_entry import BackupEntry
 
 # 常量定义
 TIMEOUT = 3
@@ -23,7 +24,7 @@ HTTP_OK = 200
 logger = LoggerWrapper()
 
 # Setup script directories and files
-SERV00_CT8_DIR = os.path.dirname(os.path.abspath(__file__))
+SERV00_CT8_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SCRIPT_TMP_DIR = utils.get_serv00_dir_file(SERV00_CT8_DIR, "tmp")
 os.makedirs(SCRIPT_TMP_DIR, exist_ok=True)
 OK_NOTIFY_HOUR_FILE = os.path.join(SCRIPT_TMP_DIR, 'ok_notify_hour_file')
@@ -33,7 +34,7 @@ def parse_ok_notify_hours(hours_str: str) -> Optional[Set[int]]:
 
 def check_and_write_notify_hour_file(file_path: str, ok_notify_hours: Optional[Set[int]]) -> bool:
     current_hour = datetime.now(pytz.timezone('Asia/Shanghai')).hour
-    
+
     if ok_notify_hours is None or current_hour in ok_notify_hours:
         try:
             with open(file_path, "r") as file:
@@ -44,7 +45,7 @@ def check_and_write_notify_hour_file(file_path: str, ok_notify_hours: Optional[S
 
         utils.overwrite_msg_to_file(str(current_hour), file_path)
         return True
-    
+
     logger.info(f"当前时间{current_hour}不需要发起通知")
     return False
 
@@ -77,39 +78,61 @@ def check_monitor_url_visit(url: str, notifier: NotifyEntry, sys_config_entry: S
         notifier.check_monitor_url_visit_fail_notify(url, str(e))
         return False
 
-def check_monitor_url(url: str, notifier: NotifyEntry, sys_config_entry: SysConfigEntry) -> None:
-    if check_monitor_url_dns(url, notifier):
-        check_monitor_url_visit(url, notifier, sys_config_entry)
+def check_monitor_url(url: str, notifier: NotifyEntry, sys_config_entry: SysConfigEntry) -> bool:
+    if not check_monitor_url_dns(url, notifier):
+        return False
+    return check_monitor_url_visit(url, notifier, sys_config_entry)
 
-def all_host_make_heart_beat(config_entries: List[Dict], heart_beat_entry_file: str, heart_beat_extra_info: Dict, local_host_name: str, local_user_name: str) -> None:
+async def process_host_heart_beat(entry: Dict, heart_beat_entry_file: str, heart_beat_extra_info: Dict,
+                                  local_host_name: str, local_user_name: str, host_id: int) -> None:
+    """处理单个主机的心跳"""
+    client = entry.get('client')
+    hostname = entry.get('hostname')
+    username = entry.get('username')
+
+    if hostname == local_host_name and username == local_user_name:
+        logger.info(f"==> [{host_id}]号主机[{username}@{hostname}]是当前主机，跳过不处理")
+        return
+
+    if client:
+        logger.info(f"==> 开始维护[{host_id}]号主机[{username}@{hostname}]的心跳...")
+        remote_heart_beat_entry_file = heart_beat_entry_file.replace(local_user_name, username)
+        param = utils.make_heart_beat_extra_info(heart_beat_extra_info, hostname, username)
+        try:
+            result = await AsyncExecutor.run_in_thread(
+                client.ssh_exec_script,
+                remote_heart_beat_entry_file,
+                param
+            )
+            if not result:
+                logger.warning(f"==> 维护[{host_id}]号主机[{username}@{hostname}]的心跳失败")
+        except Exception as e:
+            logger.error(f"==> 维护[{host_id}]号主机[{username}@{hostname}]的心跳时发生异常: {str(e)}")
+    else:
+        logger.error(f"==> 维护远程主机[{host_id}]号主机[{username}@{hostname}]失败, 初始化配置的时候连接异常")
+
+async def all_host_make_heart_beat(config_entries: List[Dict], heart_beat_entry_file: str,
+                                  heart_beat_extra_info: Dict, local_host_name: str, local_user_name: str) -> None:
+    """异步并行处理所有主机的心跳"""
+    tasks = []
+
     for host_id, entry in enumerate(config_entries, 1):
-        client = entry.get('client')
-        hostname = entry.get('hostname')
-        username = entry.get('username')
-        
-        if hostname == local_host_name and username == local_user_name:
-            logger.info(f"==> [{host_id}]号主机[{username}@{hostname}]是当前主机，跳过不处理")
-            continue
-        
-        if client:
-            logger.info(f"==> 开始维护[{host_id}]号主机[{username}@{hostname}]的心跳...")
-            remote_heart_beat_entry_file = heart_beat_entry_file.replace(local_user_name, username)
-            param = utils.make_heart_beat_extra_info(heart_beat_extra_info, hostname, username)
-            try:
-                result = client.ssh_exec_script(remote_heart_beat_entry_file, param)
-                if not result:
-                    logger.warning(f"==> 维护[{host_id}]号主机[{username}@{hostname}]的心跳失败")
-            except Exception as e:
-                logger.error(f"==> 维护[{host_id}]号主机[{username}@{hostname}]的心跳时发生异常: {str(e)}")
-        else:
-            logger.error(f"==> 维护远程主机[{host_id}]号主机[{username}@{hostname}]失败, 初始化配置的时候连接异常")
+        task = process_host_heart_beat(
+            entry, heart_beat_entry_file, heart_beat_extra_info,
+            local_host_name, local_user_name, host_id
+        )
+        tasks.append(task)
+
+    # 并行执行所有心跳任务，最多5个并发
+    await AsyncExecutor.gather_with_concurrency(5, *tasks)
 
 def load_configurations(serv00_ct8_dir: str) -> Tuple[SysConfigEntry, str]:
     sys_config_file = utils.get_serv00_config_file(serv00_ct8_dir, 'sys.conf')
     heart_beat_config_file = utils.get_serv00_config_file(serv00_ct8_dir, 'heartbeat.conf')
     return SysConfigEntry(sys_config_file), heart_beat_config_file
 
-def main() -> None:
+async def main_async() -> None:
+    """异步主函数"""
     try:
         logger.info(f"==============> 开始心跳模块 <==============")
 
@@ -144,16 +167,27 @@ def main() -> None:
             logger.info(f"==> 开始读取心跳配置文件[{heart_beat_config_file}]...")
             heart_beat_config = HeartBeatConfigEntry(heart_beat_config_file, private_key_file)
             heart_config_entries = heart_beat_config.get_entries()
-            all_host_make_heart_beat(heart_config_entries, heart_beat_entry_file, heat_beat_extra_info, host_name, user_name)
+
+            # 异步处理所有主机的心跳
+            await all_host_make_heart_beat(
+                heart_config_entries, heart_beat_entry_file,
+                heat_beat_extra_info, host_name, user_name
+            )
 
         backup_entry = BackupEntry(sys_config_entry)
         dashboard_db_file = utils.get_dashboard_db_file(user_name)
-        backup_entry.backup_dashboard_db(dashboard_db_file)
+
+        # 异步执行备份
+        await backup_entry.backup_dashboard_db_async(dashboard_db_file)
 
     except Exception as e:
         logger.error(f"心跳模块运行时出现未预期的错误: {str(e)}")
     finally:
         logger.info(f"==============> 结束心跳模块 <==============")
 
-if __name__ == '__main__':
+def main() -> None:
+    """同步入口函数，启动异步事件循环"""
+    asyncio.run(main_async())
+
+if __name__ == "__main__":
     main()

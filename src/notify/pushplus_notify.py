@@ -2,8 +2,8 @@ import requests
 from datetime import datetime
 import pytz
 from typing import Dict
-from logger_wrapper import LoggerWrapper
-from sys_config_entry import SysConfigEntry
+from ..utils.logger_wrapper import LoggerWrapper
+from ..config.sys_config_entry import SysConfigEntry
 
 class PushPlusNotify:
     _instance = None
@@ -16,7 +16,7 @@ class PushPlusNotify:
         return cls._instance
 
     def __init__(self, sys_config_entry: SysConfigEntry):
-        if self._initialized:
+        if getattr(self, '_initialized', False):
             return
         self._initialized = True
         self.sys_config_entry = sys_config_entry
@@ -42,20 +42,35 @@ class PushPlusNotify:
         self.logger.info(f"监控域名{url} {title}\n{content}")
         self._send_notify(title, content)
 
-    def _build_message(self, title: str, content: str) -> Dict[str, str]:
+    def _build_message(self, title: str, content: str) -> Dict:
         system_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         beijing_time = datetime.now(pytz.timezone('Asia/Shanghai')).strftime('%Y-%m-%d %H:%M:%S')
         return {
             "token": self.api_token,
             "title": title,
-            "content": f"----- {title} -----\n{content}\n系统时间: {system_time}\n北京时间: {beijing_time}"
+            "content": f"{content}\n\n系统时间: {system_time}\n北京时间: {beijing_time}",
+            "template": "html"
         }
 
     def _send_notify(self, title: str, content: str) -> None:
-        message = self._build_message(title, content)
+        if not self.api_token:
+            self.logger.error("PushPlus token未配置，无法发送通知")
+            return
+
         try:
-            with requests.post(self.PUSHPLUS_API_URL, json=message, headers=self.headers, timeout=2) as response:
-                response.raise_for_status()
-                self.logger.info(f"PushPlus推送消息成功: {response.text}")
-        except requests.RequestException as e:
-            self.logger.error(f"PushPlus推送消息失败，错误: {str(e)}")
+            message = self._build_message(title, content)
+            response = requests.post(
+                self.PUSHPLUS_API_URL,
+                json=message,
+                headers=self.headers,
+                timeout=5
+            )
+            response.raise_for_status()
+            result = response.json()
+
+            if result.get('code') == 200:
+                self.logger.info(f"PushPlus通知发送成功: {title}")
+            else:
+                self.logger.error(f"PushPlus通知发送失败: {result}")
+        except Exception as e:
+            self.logger.error(f"PushPlus通知发送异常: {str(e)}")

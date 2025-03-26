@@ -1,7 +1,8 @@
-from paramiko_client import ParamikoClient
+#!/usr/bin/env python3
+from ..ssh.paramiko_client import ParamikoClient
 import os
 from typing import List, Dict, Optional
-from logger_wrapper import LoggerWrapper
+from ..utils.logger_wrapper import LoggerWrapper
 
 # 初始化日志记录器
 logger = LoggerWrapper()

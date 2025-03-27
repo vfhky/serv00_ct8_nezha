@@ -7,6 +7,7 @@ from typing import List, Dict, Optional
 import asyncio
 import traceback
 import atexit
+import glob
 
 # 确保 src 目录在系统路径中
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -134,7 +135,37 @@ async def main_async():
 
         # 当前脚本所在的目录
         serv00_ct8_dir = os.path.dirname(os.path.abspath(__file__))
-        utils_sh_file = utils.get_serv00_dir_file(serv00_ct8_dir, 'scripts/utils.sh')
+        scripts_dir = os.path.join(serv00_ct8_dir, 'scripts')
+
+        # 确保scripts目录存在
+        if not os.path.exists(scripts_dir):
+            logger.error(f"脚本目录不存在: {scripts_dir}")
+            logger.info("正在创建scripts目录...")
+            try:
+                os.makedirs(scripts_dir, exist_ok=True)
+                logger.info(f"成功创建scripts目录: {scripts_dir}")
+            except Exception as e:
+                logger.error(f"创建scripts目录失败: {str(e)}")
+                return
+
+        # 检查utils.sh等脚本是否存在
+        utils_sh_file = os.path.join(scripts_dir, 'utils.sh')
+        if not os.path.exists(utils_sh_file):
+            logger.error(f"工具脚本不存在: {utils_sh_file}")
+            logger.info("请确保项目已正确克隆，并且scripts目录包含所有必要的shell脚本")
+            return
+
+        # 设置所有shell脚本可执行权限
+        shell_scripts = glob.glob(os.path.join(scripts_dir, '*.sh'))
+        if not shell_scripts:
+            logger.error(f"在{scripts_dir}中未找到任何shell脚本")
+            return
+
+        for script in shell_scripts:
+            if not utils.ensure_file_permissions(script, 0o755):
+                logger.warning(f"无法设置脚本权限: {script}")
+            else:
+                logger.info(f"已设置脚本权限: {script}")
 
         # 检查utils.sh脚本是否存在和权限
         if not os.path.exists(utils_sh_file):

@@ -52,15 +52,19 @@ class ServiceManager:
 
             # 初始化配置管理器
             if config_file:
-                success = ConfigLoader.load_config(config_file)
+                success = ConfigLoader.load_config_file(config_file)
             else:
                 success = ConfigLoader.load_default_config()
 
             if not success:
-                logger.error("加载配置失败")
+                logger.error("加载配置失败，请确保配置文件存在且格式正确")
                 return False
 
-            self.config = ConfigLoader.get_config()
+            # 获取系统配置
+            self.config = ConfigLoader.get_config('sys')
+            if not self.config:
+                logger.error("获取系统配置失败")
+                return False
 
             # 初始化各个服务组件
             notifier_manager.initialize(self.config)

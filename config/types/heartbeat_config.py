@@ -2,7 +2,7 @@
 import os
 from typing import Any, Dict, List, Optional
 from config.base import ConfigBase
-from services.ssh.paramiko_client import ParamikoClient
+from services.ssh.client import SSHClient
 from utils.logger import get_logger
 from utils.decorators import singleton
 

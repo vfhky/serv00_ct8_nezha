@@ -2,7 +2,7 @@
 import os
 from typing import Any, Dict, List, Optional
 from config.base import ConfigBase
-from services.ssh.paramiko_client import ParamikoClient
+from services.ssh.client import ParamikoClient
 from utils.logger import get_logger
 
 logger = get_logger()
@@ -120,7 +120,7 @@ class HostConfig(ConfigBase):
         Returns:
             Optional[ParamikoClient]: 客户端实例，如果创建失败则返回None
         """
-        # 注意: 这里假设ParamikoClient已被迁移到services/ssh/paramiko_client.py
+        # 注意: 这里假设ParamikoClient已被迁移到services/ssh/client.py
         try:
             # 优先使用密钥认证
             if self.private_key_file and os.path.exists(self.private_key_file):

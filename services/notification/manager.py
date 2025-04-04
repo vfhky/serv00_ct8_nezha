@@ -7,7 +7,7 @@ from utils.decorators import singleton
 logger = get_logger()
 
 @singleton
-class NotificationManager:
+class NotifierManager:
     """
     通知管理器，用于处理各种通知场景
     """
@@ -144,4 +144,4 @@ class NotificationManager:
         return NotificationFactory.notify_all(message, level, **kwargs)
 
 # 创建单例实例
-notification_manager = NotificationManager()
+notifier_manager = NotifierManager()

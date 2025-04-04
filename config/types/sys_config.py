@@ -109,39 +109,11 @@ class SysConfig(ConfigBase):
             if key not in self.config_data:
                 errors.append(f"缺少必要的配置项: {key}")
 
-        # 验证布尔值配置项
-        bool_keys = ['notification_enabled', 'backup_enabled', 'debug_mode']
-        for key in bool_keys:
-            if key in self.config_data:
-                value = self.config_data[key]
-                if value.lower() not in ['true', 'false']:
-                    errors.append(f"配置项 {key} 必须为布尔值(true/false): {value}")
-
-        # 验证整数配置项
-        int_keys = ['backup_interval', 'backup_retention', 'monitor_interval',
-                    'monitor_retry', 'monitor_timeout', 'heartbeat_interval',
-                    'heartbeat_timeout']
-        for key in int_keys:
-            if key in self.config_data:
-                value = self.config_data[key]
-                try:
-                    int_value = int(value)
-                    if int_value <= 0:
-                        errors.append(f"配置项 {key} 必须为正整数: {value}")
-                except (ValueError, TypeError):
-                    errors.append(f"配置项 {key} 必须为整数: {value}")
-
-        # 验证日志级别
-        if 'log_level' in self.config_data:
-            log_level = self.config_data['log_level']
-            if log_level not in ['debug', 'info', 'warning', 'error']:
-                errors.append(f"配置项 log_level 必须为 'debug', 'info', 'warning' 或 'error': {log_level}")
-
-        # 验证通知级别
-        if 'notification_level' in self.config_data:
-            notification_level = self.config_data['notification_level']
-            if notification_level not in ['info', 'warning', 'error']:
-                errors.append(f"配置项 notification_level 必须为 'info', 'warning' 或 'error': {notification_level}")
+        # 为非必要但重要的配置项设置默认值
+        if 'log_level' not in self.config_data:
+            self.config_data['log_level'] = 'false'
+        if self.config_data['log_level'] not in ['debug', 'info', 'warning', 'error']:
+            errors.append(f"配置项 log_level 必须为 'debug', 'info', 'warning' 或 'error': {self.config_data['log_level']}")
 
         return len(errors) == 0, errors
 

@@ -2,6 +2,8 @@ import functools
 import time
 from typing import Callable, Any, TypeVar, cast
 from utils.logger import get_logger
+import threading
+from functools import wraps
 
 logger = get_logger()
 
@@ -11,10 +13,10 @@ T = TypeVar('T')
 def time_count(func: Callable[..., T]) -> Callable[..., T]:
     """
     计时装饰器，用于测量函数执行时间
-    
+
     Args:
         func: 被装饰的函数
-        
+
     Returns:
         Callable: 装饰后的函数
     """
@@ -38,13 +40,13 @@ def time_count(func: Callable[..., T]) -> Callable[..., T]:
 def retry(max_attempts: int = 3, delay: float = 1.0, backoff: float = 2.0, exceptions: tuple = (Exception,)):
     """
     重试装饰器，在遇到指定异常时进行重试
-    
+
     Args:
         max_attempts: 最大尝试次数
         delay: 初始延迟时间（秒）
         backoff: 延迟时间的增长因子
         exceptions: 触发重试的异常类型
-        
+
     Returns:
         Callable: 装饰器函数
     """
@@ -53,7 +55,7 @@ def retry(max_attempts: int = 3, delay: float = 1.0, backoff: float = 2.0, excep
         def wrapper(*args: Any, **kwargs: Any) -> T:
             attempt = 1
             current_delay = delay
-            
+
             while attempt <= max_attempts:
                 try:
                     return func(*args, **kwargs)
@@ -61,33 +63,35 @@ def retry(max_attempts: int = 3, delay: float = 1.0, backoff: float = 2.0, excep
                     if attempt == max_attempts:
                         logger.error(f"函数 {func.__name__} 重试失败，达到最大尝试次数 {max_attempts}")
                         raise
-                    
+
                     logger.warning(f"函数 {func.__name__} 尝试 {attempt}/{max_attempts} 失败: {str(e)}，将在 {current_delay:.2f} 秒后重试")
                     time.sleep(current_delay)
                     attempt += 1
                     current_delay *= backoff
-            
+
             # 这里实际上不会执行到，但为了类型检查添加
             raise RuntimeError("Unreachable code")
         return cast(Callable[..., T], wrapper)
     return decorator
 
-def singleton(cls: Any) -> Any:
+def singleton(cls: Type[T]) -> Type[T]:
     """
-    单例装饰器，确保类只有一个实例
-    
+    线程安全的单例装饰器
+
     Args:
         cls: 要装饰的类
-        
+
     Returns:
-        Any: 装饰后的类
+        Type[T]: 装饰后的类
     """
     instances = {}
-    
-    @functools.wraps(cls)
-    def get_instance(*args: Any, **kwargs: Any) -> Any:
-        if cls not in instances:
-            instances[cls] = cls(*args, **kwargs)
-        return instances[cls]
-    
+    lock = threading.RLock()
+
+    @wraps(cls)
+    def get_instance(*args, **kwargs) -> T:
+        with lock:
+            if cls not in instances:
+                instances[cls] = cls(*args, **kwargs)
+            return instances[cls]
+
     return get_instance

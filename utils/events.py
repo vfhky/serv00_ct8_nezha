@@ -68,6 +68,15 @@ def get_event_bus() -> EventBus:
 
 # 常用事件类型
 class EventTypes:
+    """
+    事件类型枚举
+    """
+
+    ERROR_EVENT = "error_event"
+    WARNING_EVENT = "warning_event"
+    SUCCESS_EVENT = "success_event"
+    SYSTEM_EVENT = "system_event"
+
     # 系统事件
     SYSTEM_STARTUP = "system:startup"
     SYSTEM_SHUTDOWN = "system:shutdown"

@@ -5,8 +5,7 @@ import threading
 import traceback
 from typing import Dict, Any, Optional, List, Tuple, Callable
 
-from config.base import ConfigBase
-from config.manager import config_manager
+from config.loader import ConfigLoader
 from utils.logger import get_logger
 from utils.events import get_event_bus, EventTypes, EventBus
 from utils.decorators import singleton
@@ -53,15 +52,15 @@ class ServiceManager:
 
             # 初始化配置管理器
             if config_file:
-                success = config_manager.load_config(config_file)
+                success = ConfigLoader.load_config(config_file)
             else:
-                success = config_manager.load_default_config()
+                success = ConfigLoader.load_default_config()
 
             if not success:
                 logger.error("加载配置失败")
                 return False
 
-            self.config = config_manager.get_config()
+            self.config = ConfigLoader.get_config()
 
             # 初始化各个服务组件
             notifier_manager.initialize(self.config)
@@ -148,7 +147,7 @@ class ServiceManager:
                 (heartbeat_service.stop, "心跳服务"),
                 (self._cleanup_resources, "服务管理器资源")
             ]
-            
+
             # 执行所有清理任务，不因一个失败而中断
             for task, name in cleanup_tasks:
                 try:

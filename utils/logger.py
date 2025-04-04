@@ -50,7 +50,7 @@ class LoggerWrapper:
             self.log_file = log_file
 
         # 创建日志记录器
-        self.logger = logging.getLogger('nezha_manager')
+        self.logger = logging.getLogger('logs')
         self.logger.setLevel(self.log_level)
 
         # 清除现有处理器

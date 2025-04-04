@@ -20,9 +20,17 @@ class LoggerWrapper:
         self.log_level = logging.INFO
         self.log_format = '%(asctime)s - %(levelname)s - %(message)s'
         self.date_format = '%Y-%m-%d %H:%M:%S'
-        self.log_file = os.path.join(tempfile.gettempdir(), "nezha_manager.log")
-        self.max_bytes = 10 * 1024 * 1024  # 10MB
-        self.backup_count = 3
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.abspath(os.path.join(current_dir, '..'))
+        logs_dir = os.path.join(project_root, 'logs')
+        if not os.path.exists(logs_dir):
+            try:
+                os.makedirs(logs_dir, exist_ok=True)
+            except Exception as e:
+                print(f"创建日志目录失败: {str(e)}")
+        self.log_file = os.path.join(logs_dir, "main.log")
+        self.max_bytes = 2 * 1024 * 1024  # 2MB
+        self.backup_count = 2
 
     def initialize(self, log_level=None, log_file=None):
         """

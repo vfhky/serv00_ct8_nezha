@@ -124,7 +124,7 @@ rename_config_files() {
                     fi
                 else
                     key=$(echo "$line" | awk -F= '{print $1}')
-                    
+
                     if ! grep -q "^${key}" "$keys_file"; then
                         echo "$line" >> "$new_file"
                     fi
@@ -301,7 +301,7 @@ kill_process() {
     if [[ -n "$pids" ]]; then
         echo "====> 正在关闭进程 [${process_name}]"
         for pid in $pids; do
-            kill -15 "$pid" && sleep 2
+            kill -15 "$pid" && sleep 5
             if kill -0 "$pid" 2>/dev/null; then
                 kill -9 "$pid"
             fi

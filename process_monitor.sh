@@ -26,7 +26,7 @@ kill_process() {
     local pids=$(pgrep -f "${process_name}")
     if [[ -n "$pids" ]]; then
         for pid in $pids; do
-            kill -15 "$pid" && sleep 2
+            kill -15 "$pid" && sleep 5
             if kill -0 "$pid" 2>/dev/null; then
                 kill -9 "$pid"
             fi
@@ -54,10 +54,10 @@ check_and_restart_processes() {
                 echo "run foreground command: $cmd"
                 $cmd
             fi
-            
+
             echo "[$app_path] Restarted process=[${cmd}] at $(date)" >> "${script_dir}/restart.log"
             cd "${script_dir}" || continue
-            
+
             sleep 1
         else
             echo "process [$process_name] is running."

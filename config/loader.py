@@ -21,10 +21,10 @@ class ConfigLoader:
         'monitor': 'config/monitor.conf'
     }
     _template_paths = {
-        'sys': 'config/sys.eg',
-        'host': 'config/host.eg',
-        'heartbeat': 'config/heartbeat.eg',
-        'monitor': 'config/monitor.eg'
+        'sys': 'config/templates/sys.eg',
+        'host': 'config/templates/host.eg',
+        'heartbeat': 'config/templates/heartbeat.eg',
+        'monitor': 'config/templates/monitor.eg'
     }
 
     @staticmethod

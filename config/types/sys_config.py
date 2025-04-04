@@ -98,7 +98,7 @@ class SysConfig(ConfigBase):
 
         # 为非必要但重要的配置项设置默认值
         if 'log_level' not in self.config_data:
-            self.config_data['log_level'] = 'false'
+            self.config_data['log_level'] = 'info'
         if self.config_data['log_level'] not in ['debug', 'info', 'warning', 'error']:
             errors.append(f"配置项 log_level 必须为 'debug', 'info', 'warning' 或 'error': {self.config_data['log_level']}")
 

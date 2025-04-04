@@ -1,24 +1,15 @@
 # config/types/sys_config.py
 from typing import Any, Dict, Optional
 from config.base import ConfigBase
+from utils.decorators import singleton
 
+@singleton
 class SysConfig(ConfigBase):
     """
     系统配置类，处理系统级配置
     """
-    _instance = None
-    
-    def __new__(cls, file_path: str):
-        if cls._instance is None:
-            cls._instance = super(SysConfig, cls).__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
     
     def __init__(self, file_path: str):
-        if getattr(self, '_initialized', False):
-            return
-        
-        self._initialized = True
         self.file_path = file_path
         self.config = self._parse_config_file()
     

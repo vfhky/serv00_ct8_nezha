@@ -32,6 +32,9 @@ class ParamikoClient(SSHClientBase):
         self.timeout = timeout
         self.client = None
         self.additional_options = {}
+
+    def __del__(self):
+        self.cleanup()
     
     def connect(self, use_password: bool = False, **kwargs) -> Tuple[int, str]:
         """
@@ -258,3 +261,16 @@ class ParamikoClient(SSHClientBase):
             self.client.close()
             self.client = None
             logger.info(f"关闭SSH连接 [{self.username}@{self.hostname}:{self.port}]")
+
+    def cleanup(self) -> None:
+        """
+        清理资源，关闭连接
+        """
+        if self.client:
+            try:
+                self.client.close()
+                logger.debug(f"SSH连接已关闭: {self.username}@{self.hostname}:{self.port}")
+            except Exception as e:
+                logger.error(f"关闭SSH连接异常: {str(e)}")
+            finally:
+                self.client = None

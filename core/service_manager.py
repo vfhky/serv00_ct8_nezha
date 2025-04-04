@@ -140,17 +140,21 @@ class ServiceManager:
             if self.watch_thread and self.watch_thread.is_alive():
                 self.watch_thread.join(timeout=5)
 
-            # 停止心跳服务
-            heartbeat_service.stop()
-
-            # 停止监控服务
-            monitor_manager.stop()
-
-            # 停止备份服务
-            backup_manager.stop()
-
-            # 停止通知服务
-            notifier_manager.stop()
+            # 创建资源清理列表
+            cleanup_tasks = [
+                (notifier_manager.stop, "通知服务"),
+                (backup_manager.stop, "备份服务"),
+                (monitor_manager.stop, "监控服务"),
+                (heartbeat_service.stop, "心跳服务"),
+                (self._cleanup_resources, "服务管理器资源")
+            ]
+            
+            # 执行所有清理任务，不因一个失败而中断
+            for task, name in cleanup_tasks:
+                try:
+                    task()
+                except Exception as e:
+                    logger.error(f"停止{name}失败: {str(e)}")
 
             self.services_started = False
             logger.info("所有服务已停止")

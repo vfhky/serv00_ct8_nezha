@@ -10,6 +10,13 @@ class EventBus:
     事件总线，用于组件间的解耦通信
     """
 
+    def __init__(self):
+        """
+        初始化事件总线
+        """
+        # 添加这一行，初始化_handlers字典
+        self._handlers = {}
+
     def subscribe(self, event_type: str, handler: Callable) -> None:
         """
         订阅事件

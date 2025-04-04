@@ -1,11 +1,7 @@
 import functools
 import time
 from typing import Callable, Any, TypeVar, cast
-from utils.logger import get_logger
-import threading
 from functools import wraps
-
-logger = get_logger()
 
 # 泛型类型
 T = TypeVar('T')
@@ -74,24 +70,20 @@ def retry(max_attempts: int = 3, delay: float = 1.0, backoff: float = 2.0, excep
         return cast(Callable[..., T], wrapper)
     return decorator
 
-def singleton(cls: Type[T]) -> Type[T]:
+def singleton(cls):
     """
-    线程安全的单例装饰器
+    单例装饰器
+    确保类只有一个实例
 
     Args:
         cls: 要装饰的类
 
     Returns:
-        Type[T]: 装饰后的类
+        装饰后的类
     """
-    instances = {}
-    lock = threading.RLock()
-
-    @wraps(cls)
-    def get_instance(*args, **kwargs) -> T:
-        with lock:
-            if cls not in instances:
-                instances[cls] = cls(*args, **kwargs)
-            return instances[cls]
-
-    return get_instance
+    @functools.wraps(cls)
+    def wrapper(*args, **kwargs):
+        if not hasattr(wrapper, 'instance'):
+            wrapper.instance = cls(*args, **kwargs)
+        return wrapper.instance
+    return wrapper

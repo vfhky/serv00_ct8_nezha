@@ -1,7 +1,7 @@
 from typing import Dict, Optional, Type, Any
-from core.installer.base import InstallerBase
-from core.installer.dashboard import DashboardInstaller, dashboard_installer
-from core.installer.agent import AgentInstaller, agent_installer
+from services.installer.base import InstallerBase
+from services.installer.dashboard import DashboardInstaller, dashboard_installer
+from services.installer.agent import AgentInstaller, agent_installer
 from config.base import ConfigBase
 from utils.logger import get_logger
 

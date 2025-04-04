@@ -5,7 +5,7 @@ import shutil
 import yaml
 from typing import Dict, Any, Optional, List, Tuple
 
-from core.installer.base import InstallerBase
+from services.installer.base import InstallerBase
 from config.base import ConfigBase
 from utils.logger import get_logger
 from utils.system import run_shell_script, run_shell_command

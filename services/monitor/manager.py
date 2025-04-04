@@ -3,8 +3,8 @@ import threading
 from typing import Dict, Any, Optional, List, Tuple
 
 from services.monitor.base import MonitorBase
-from core.monitor.process import ProcessMonitor, DashboardMonitor, AgentMonitor
-from core.monitor.url import UrlMonitor
+from services.monitor.process import ProcessMonitor, DashboardMonitor, AgentMonitor
+from services.monitor.url import UrlMonitor
 from config.base import ConfigBase
 from utils.logger import get_logger
 from utils.events import get_event_bus, EventTypes

@@ -1,15 +1,12 @@
 # cli/handler.py (仅显示需要修改的导入部分)
 
 import os
-import sys
 import json
-import yaml
 import logging
-from typing import Dict, Any, List, Optional, Tuple
+from utils.logger import get_logger
+from typing import Dict, Any, Optional
 
 from core.service_manager import service_manager
-from services.installer.factory import InstallerFactory
-from services.installer import dashboard_installer, agent_installer
 
 logger = get_logger()
 
@@ -73,7 +70,7 @@ class CommandHandler:
         version = args.get('version', 'v0')
         
         # 创建dashboard安装器
-        from core.installer.factory import InstallerFactory
+        from services.installer.factory import InstallerFactory
         dashboard_installer = InstallerFactory.create_dashboard_installer(
             service_manager.config, 
             version
@@ -109,7 +106,7 @@ class CommandHandler:
             return 1
         
         # 创建agent安装器
-        from core.installer.factory import InstallerFactory
+        from services.installer.factory import InstallerFactory
         agent_installer = InstallerFactory.create_agent_installer(
             service_manager.config, 
             version
@@ -164,7 +161,7 @@ class CommandHandler:
         Returns:
             int: 退出码，0表示成功，非0表示失败
         """
-        from core.installer import dashboard_installer
+        from services.installer import dashboard_installer
         success, message = dashboard_installer.start()
         
         if success:
@@ -181,7 +178,7 @@ class CommandHandler:
         Returns:
             int: 退出码，0表示成功，非0表示失败
         """
-        from core.installer import agent_installer
+        from services.installer import agent_installer
         success, message = agent_installer.start()
         
         if success:
@@ -214,7 +211,7 @@ class CommandHandler:
         Returns:
             int: 退出码，0表示成功，非0表示失败
         """
-        from core.installer import dashboard_installer
+        from services.installer import dashboard_installer
         success, message = dashboard_installer.stop()
         
         if success:
@@ -231,7 +228,7 @@ class CommandHandler:
         Returns:
             int: 退出码，0表示成功，非0表示失败
         """
-        from core.installer import agent_installer
+        from services.installer import agent_installer
         success, message = agent_installer.stop()
         
         if success:
@@ -264,7 +261,7 @@ class CommandHandler:
         Returns:
             int: 退出码，0表示成功，非0表示失败
         """
-        from core.installer import dashboard_installer
+        from services.installer import dashboard_installer
         
         # 先停止
         success, _ = dashboard_installer.stop()
@@ -289,7 +286,7 @@ class CommandHandler:
         Returns:
             int: 退出码，0表示成功，非0表示失败
         """
-        from core.installer import agent_installer
+        from services.installer import agent_installer
         
         # 先停止
         success, _ = agent_installer.stop()
@@ -330,7 +327,7 @@ class CommandHandler:
         Returns:
             int: 退出码，0表示成功，非0表示失败
         """
-        from core.installer import dashboard_installer
+        from services.installer import dashboard_installer
         
         is_running, message = dashboard_installer.check_status()
         version = dashboard_installer.get_version()
@@ -352,7 +349,7 @@ class CommandHandler:
         Returns:
             int: 退出码，0表示成功，非0表示失败
         """
-        from core.installer import agent_installer
+        from services.installer import agent_installer
         
         is_running, message = agent_installer.check_status()
         version = agent_installer.get_version()
@@ -424,7 +421,7 @@ class CommandHandler:
         Returns:
             int: 退出码，0表示成功，非0表示失败
         """
-        from core.installer import dashboard_installer
+        from services.installer import dashboard_installer
         
         # 获取当前状态
         is_running, _ = dashboard_installer.check_status()
@@ -462,7 +459,7 @@ class CommandHandler:
         Returns:
             int: 退出码，0表示成功，非0表示失败
         """
-        from core.installer import agent_installer
+        from services.installer import agent_installer
         
         # 获取当前状态
         is_running, _ = agent_installer.check_status()

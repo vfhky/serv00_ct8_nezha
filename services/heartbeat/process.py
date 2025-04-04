@@ -3,7 +3,7 @@ import time
 import subprocess
 from typing import Dict, Any, Optional, List, Tuple
 
-from core.heartbeat.base import HeartbeatBase
+from services.heartbeat.base import HeartbeatBase
 from config.base import ConfigBase
 from utils.logger import get_logger
 from utils.system import run_shell_script, run_shell_command

@@ -2,8 +2,8 @@ import time
 import threading
 from typing import Dict, Any, Optional, List, Tuple
 
-from core.heartbeat.base import HeartbeatBase
-from core.heartbeat.process import DashboardHeartbeat, AgentHeartbeat
+from services.heartbeat.base import HeartbeatBase
+from services.heartbeat.process import DashboardHeartbeat, AgentHeartbeat
 from config.base import ConfigBase
 from utils.logger import get_logger
 from utils.events import get_event_bus, EventTypes

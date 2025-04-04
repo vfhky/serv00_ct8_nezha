@@ -1,10 +1,10 @@
 import os
 from typing import Dict, Any, Optional, List, Tuple
 
-from core.installer.base import InstallerBase
-from core.installer.factory import InstallerFactory
-from core.installer.dashboard import DashboardInstaller
-from core.installer.agent import AgentInstaller
+from services.installer.base import InstallerBase
+from services.installer.factory import InstallerFactory
+from services.installer.dashboard import DashboardInstaller
+from services.installer.agent import AgentInstaller
 from config.base import ConfigBase
 from utils.logger import get_logger
 from utils.events import get_event_bus, EventTypes

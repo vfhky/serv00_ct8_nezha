@@ -96,19 +96,6 @@ class SysConfig(ConfigBase):
         """
         errors = []
 
-        # 验证必要的配置项
-        required_keys = [
-            'notification_enabled',
-            'monitor_interval',
-            'heartbeat_interval',
-            'install_dir',
-            'log_level'
-        ]
-
-        for key in required_keys:
-            if key not in self.config_data:
-                errors.append(f"缺少必要的配置项: {key}")
-
         # 为非必要但重要的配置项设置默认值
         if 'log_level' not in self.config_data:
             self.config_data['log_level'] = 'false'

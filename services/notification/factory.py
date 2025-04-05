@@ -47,18 +47,18 @@ class NotificationFactory:
         Returns:
             Dict[str, NotifierBase]: 通知名称到通知实例的映射
         """
-        # 导入所有通知实现
-        # 注意: 这些导入语句会触发各实现类的注册
-        from services.notification.qywx import QywxNotifier
-        from services.notification.qywx_app import QywxAppNotifier
-        from services.notification.tg import TelegramNotifier
-        from services.notification.pushplus import PushPlusNotifier
+        # 导入已创建的单例实例
+        from services.notification.qywx import qywx_notifier
+        from services.notification.qywx_app import qywx_app_notifier
+        from services.notification.tg import tg_notifier
+        from services.notification.pushplus import pushplus_notifier
 
-        # 根据配置初始化所有通知实现
-        QywxNotifier.initialize.__func__(QywxNotifier, config)
-        QywxAppNotifier.initialize.__func__(QywxAppNotifier, config)
-        TelegramNotifier.initialize.__func__(TelegramNotifier, config)
-        PushPlusNotifier.initialize.__func__(PushPlusNotifier, config)
+        # 接下来应该是使用这些实例，但我之前没有正确实现这部分
+        # 正确的实现应该是：
+        qywx_notifier.__class__.initialize.__func__(qywx_notifier.__class__, config)
+        qywx_app_notifier.__class__.initialize.__func__(qywx_app_notifier.__class__, config)
+        tg_notifier.__class__.initialize.__func__(tg_notifier.__class__, config)
+        pushplus_notifier.__class__.initialize.__func__(pushplus_notifier.__class__, config)
 
         return NotificationFactory._notifiers
 

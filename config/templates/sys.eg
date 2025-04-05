@@ -39,7 +39,7 @@ QYWX_APP_CROP_ID=
 QYWX_APP_SECRET=
 # 企业微信的应用ID
 QYWX_APP_AGENT_ID=
-# 企业微信的通知用户，默认为所有用户
+# 企业微信的通知用户，默认为所有用户@all
 QYWX_APP_NOTIFY_USER=@all
 
 # 七牛云备份 (0-禁用 1-启用)

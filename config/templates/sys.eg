@@ -12,7 +12,7 @@ HEAT_BEAT_CRON_TABLE_TIME=*/5 * * * *
 
 # 要监控的域名
 # 必须是有效的URL地址
-MONITOR_URL=https://monitor.example.com
+MONITOR_URL=https://monitor.typecodes.com
 
 # 企业微信机器人通知 (0-禁用 1-启用)
 ENABLE_QYWX_NOTIFY=0

@@ -50,13 +50,13 @@ class BackupFactory:
         # 导入所有备份实现
         # 注意: 这些导入语句会触发各实现类的注册
         from services.backup.qiniu import qiniu_backup
-        from services.backup.tencent import tencent_cos_backup
-        from services.backup.aliyun import aliyun_oss_backup
+        from services.backup.tencent import tencent_backup
+        from services.backup.aliyun import aliyun_backup
 
         # 根据配置初始化所有备份实现
         qiniu_backup.initialize(config)
-        tencent_cos_backup.initialize(config)
-        aliyun_oss_backup.initialize(config)
+        tencent_backup.initialize(config)
+        aliyun_backup.initialize(config)
 
         return BackupFactory._backups
 

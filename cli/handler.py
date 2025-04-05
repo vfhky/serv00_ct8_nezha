@@ -7,6 +7,7 @@ from utils.logger import get_logger
 from typing import Dict, Any, Optional
 
 from core.service_manager import service_manager
+from utils.system import run_shell_command
 
 logger = get_logger()
 

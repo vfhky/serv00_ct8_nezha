@@ -132,11 +132,15 @@ class MonitorManager:
             try:
                 # 遍历所有监控，执行检查
                 for name, monitor in self.monitors.items():
-                    is_ok, message, _ = monitor.check()
+                    is_ok = monitor.check()
 
                     # 记录异常情况，但正常情况不记录，以减少日志量
                     if not is_ok:
-                        logger.warning(f"监控异常: {name}, {message}")
+                        try:
+                            status = monitor.get_status()
+                            logger.warning(f"监控异常: {name}, 状态: {status}")
+                        except Exception as e:
+                            logger.error(f"获取监控状态失败: {name}, 错误: {str(e)}")
 
                 # 每30秒检查一次
                 time.sleep(30)

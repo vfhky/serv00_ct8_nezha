@@ -83,6 +83,9 @@ class EventTypes:
     WARNING_EVENT = "warning_event"
     SUCCESS_EVENT = "success_event"
     SYSTEM_EVENT = "system_event"
+    MONITOR_EVENT = "monitor_event"
+    BACKUP_EVENT = "backup_event"
+    HEARTBEAT_EVENT = "heartbeat_event"
 
     # 系统事件
     SYSTEM_STARTUP = "system:startup"

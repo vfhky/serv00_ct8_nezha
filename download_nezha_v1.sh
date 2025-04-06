@@ -312,6 +312,9 @@ download_dashboard() {
         echo "===> [dashboard] 准备输入新的配置数据"
         modify_dashboard_config 0
     fi
+
+    # test
+    \cp -f ~/test/dashboard-linux-amd64 ${NZ_DASHBOARD_PATH}/nezha-dashboard
 }
 
 download_agent() {
@@ -357,6 +360,9 @@ download_agent() {
     echo "===> Agent ${NZ_AGENT_URL} 下载完成"
 
     gen_agent_run_sh
+
+    # test
+    \cp -f ~/test/nezha-agent ${NZ_AGENT_PATH}/nezha-agent
 }
 
 gen_agent_config() {

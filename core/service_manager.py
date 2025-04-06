@@ -22,9 +22,7 @@ event_bus = get_event_bus()
 
 @singleton
 class ServiceManager:
-    """
-    服务管理器，负责管理所有服务组件
-    """
+    """服务管理器，负责管理所有服务组件"""
 
     def __init__(self):
         self.config = None
@@ -38,15 +36,7 @@ class ServiceManager:
         self._register_event_handlers()
 
     def initialize(self, config_file: Optional[str] = None) -> bool:
-        """
-        初始化服务管理器
-
-        Args:
-            config_file: 配置文件路径，如果不指定则使用默认路径
-
-        Returns:
-            bool: 初始化是否成功
-        """
+        """初始化服务管理器"""
         try:
             logger.info("开始初始化服务管理器")
 
@@ -84,12 +74,7 @@ class ServiceManager:
             return False
 
     def start_services(self) -> bool:
-        """
-        启动所有服务
-
-        Returns:
-            bool: 启动是否成功
-        """
+        """启动所有服务"""
         try:
             if not self.services_initialized:
                 logger.error("服务未初始化，无法启动")
@@ -128,12 +113,7 @@ class ServiceManager:
             return False
 
     def stop_services(self) -> bool:
-        """
-        停止所有服务
-
-        Returns:
-            bool: 停止是否成功
-        """
+        """停止所有服务"""
         try:
             logger.info("开始停止服务")
             event_bus.publish(EventTypes.SYSTEM_EVENT, message="开始停止服务")
@@ -172,23 +152,13 @@ class ServiceManager:
             return False
 
     def restart_services(self) -> bool:
-        """
-        重启所有服务
-
-        Returns:
-            bool: 重启是否成功
-        """
+        """重启所有服务"""
         self.stop_services()
         time.sleep(1)  # 等待服务完全停止
         return self.start_services()
 
     def get_service_status(self) -> Dict[str, Any]:
-        """
-        获取服务状态
-
-        Returns:
-            Dict[str, Any]: 服务状态信息
-        """
+        """获取服务状态"""
         status = {
             'services_initialized': self.services_initialized,
             'services_started': self.services_started,
@@ -202,123 +172,85 @@ class ServiceManager:
         return status
 
     def install_dashboard(self, params: Optional[Dict[str, Any]] = None) -> Tuple[bool, str]:
-        """
-        安装哪吒面板
-
-        Args:
-            params: 配置参数
-
-        Returns:
-            Tuple[bool, str]: 安装是否成功和消息
-        """
+        """安装哪吒面板"""
         return installation_manager.install_dashboard(params)
 
     def install_agent(self, server: str, key: str) -> Tuple[bool, str]:
-        """
-        安装哪吒Agent
-
-        Args:
-            server: 服务器地址
-            key: Agent Key
-
-        Returns:
-            Tuple[bool, str]: 安装是否成功和消息
-        """
+        """安装哪吒Agent"""
         return installation_manager.install_agent(server, key)
 
     def uninstall_dashboard(self) -> Tuple[bool, str]:
-        """
-        卸载哪吒面板
-
-        Returns:
-            Tuple[bool, str]: 卸载是否成功和消息
-        """
+        """卸载哪吒面板"""
         return installation_manager.uninstall_dashboard()
 
     def uninstall_agent(self) -> Tuple[bool, str]:
-        """
-        卸载哪吒Agent
-
-        Returns:
-            Tuple[bool, str]: 卸载是否成功和消息
-        """
+        """卸载哪吒Agent"""
         return installation_manager.uninstall_agent()
 
     def send_notification(self, message: str, level: str = "info",
                           channel: Optional[str] = None) -> bool:
-        """
-        发送通知
-
-        Args:
-            message: 通知消息
-            level: 通知级别，info/warning/error
-            channel: 通知渠道，不指定则使用所有已启用的渠道
-
-        Returns:
-            bool: 发送是否成功
-        """
-        return notifier_manager.send_notification(message, level, channel)
+        """发送通知"""
+        return notifier_manager.notify_custom(message, level, channel=channel)
 
     def backup_files(self, files: List[str], backup_name: Optional[str] = None) -> bool:
-        """
-        备份文件
-
-        Args:
-            files: 要备份的文件列表
-            backup_name: 备份任务名称，不指定则使用时间戳
-
-        Returns:
-            bool: 备份是否成功
-        """
+        """备份文件"""
         return backup_manager.backup_files(files, backup_name)
 
     def subscribe_event(self, event_type: str, callback: Callable[[Dict[str, Any]], None]) -> None:
-        """
-        订阅事件
-
-        Args:
-            event_type: 事件类型
-            callback: 回调函数
-        """
+        """订阅事件"""
         event_bus.subscribe(event_type, callback)
 
+    def add_event_handler(self, event_type: str, handler: Callable) -> None:
+        """添加事件处理器"""
+        if event_type not in self.event_handlers:
+            self.event_handlers[event_type] = []
+        self.event_handlers[event_type].append(handler)
+        event_bus.subscribe(event_type, handler)
+
+    def remove_event_handler(self, event_type: str, handler: Callable) -> None:
+        """移除事件处理器"""
+        if event_type in self.event_handlers and handler in self.event_handlers[event_type]:
+            self.event_handlers[event_type].remove(handler)
+            event_bus.unsubscribe(event_type, handler)
+
     def _register_event_handlers(self) -> None:
-        """
-        注册事件处理器
-        """
+        """注册默认事件处理器"""
         # 错误事件处理
-        event_bus.subscribe(EventTypes.ERROR_EVENT, self._handle_error_event)
+        self.add_event_handler(EventTypes.ERROR_EVENT, self._handle_error_event)
 
         # 警告事件处理
         event_bus.subscribe(EventTypes.WARNING_EVENT, self._handle_warning_event)
 
         # 成功事件处理
-        event_bus.subscribe(EventTypes.SUCCESS_EVENT, self._handle_success_event)
+        self.add_event_handler(EventTypes.SUCCESS_EVENT, self._handle_success_event)
 
         # 系统事件处理
-        event_bus.subscribe(EventTypes.SYSTEM_EVENT, self._handle_system_event)
+        self.add_event_handler(EventTypes.SYSTEM_EVENT, self._handle_system_event)
 
-    def _handle_error_event(self, event_data: Dict[str, Any]) -> None:
-        """
-        处理错误事件
+        # 监控事件处理
+        self.add_event_handler(EventTypes.MONITOR_EVENT, self._handle_monitor_event)
 
-        Args:
-            event_data: 事件数据
-        """
-        if 'message' in event_data:
-            logger.error(event_data['message'])
+        # 备份事件处理
+        self.add_event_handler(EventTypes.BACKUP_EVENT, self._handle_backup_event)
 
-            # 如果通知管理器已初始化，发送通知
-            if self.services_initialized:
-                notifier_manager.send_notification(event_data['message'], "error")
+        # 心跳事件处理
+        self.add_event_handler(EventTypes.HEARTBEAT_EVENT, self._handle_heartbeat_event)
+
+    def _handle_system_event(self, event_type: str, **kwargs) -> None:
+        """处理系统事件"""
+        message = kwargs.get('message', '')
+        logger.info(f"系统事件: {message}")
+
+    def _handle_error_event(self, event_type: str, **kwargs) -> None:
+        """处理错误事件"""
+        message = kwargs.get('message', '')
+        logger.error(f"错误事件: {message}")
+
+        # 发送通知
+        self.send_notification(f"错误: {message}", level="error")
 
     def _handle_warning_event(self, event_data: Dict[str, Any]) -> None:
-        """
-        处理警告事件
-
-        Args:
-            event_data: 事件数据
-        """
+        """处理警告事件"""
         if 'message' in event_data:
             logger.warning(event_data['message'])
 
@@ -326,72 +258,93 @@ class ServiceManager:
             if self.services_initialized:
                 notifier_manager.send_notification(event_data['message'], "warning")
 
-    def _handle_success_event(self, event_data: Dict[str, Any]) -> None:
-        """
-        处理成功事件
+    def _handle_success_event(self, event_type: str, **kwargs) -> None:
+        """处理成功事件"""
+        message = kwargs.get('message', '')
+        logger.info(f"成功事件: {message}")
 
-        Args:
-            event_data: 事件数据
-        """
-        if 'message' in event_data:
-            logger.info(event_data['message'])
+    def _handle_monitor_event(self, event_type: str, **kwargs) -> None:
+        """处理监控事件"""
+        status = kwargs.get('status', '')
+        url = kwargs.get('url', '')
+        message = kwargs.get('message', '')
 
-            # 如果通知管理器已初始化，发送通知
-            if self.services_initialized:
-                notifier_manager.send_notification(event_data['message'], "info")
+        if status == 'success':
+            logger.info(f"监控成功: {url}")
+        else:
+            logger.warning(f"监控失败: {url}, {message}")
+            # 发送通知
+            self.send_notification(f"监控失败: {url}, {message}", level="warning")
 
-    def _handle_system_event(self, event_data: Dict[str, Any]) -> None:
-        """
-        处理系统事件
+    def _handle_backup_event(self, event_type: str, **kwargs) -> None:
+        """处理备份事件"""
+        status = kwargs.get('status', '')
+        file = kwargs.get('file', '')
+        message = kwargs.get('message', '')
 
-        Args:
-            event_data: 事件数据
-        """
-        if 'message' in event_data:
-            logger.info(event_data['message'])
+        if status == 'success':
+            logger.info(f"备份成功: {file}")
+        else:
+            logger.warning(f"备份失败: {file}, {message}")
+            # 发送通知
+            self.send_notification(f"备份失败: {file}, {message}", level="warning")
+
+    def _handle_heartbeat_event(self, event_type: str, **kwargs) -> None:
+        """处理心跳事件"""
+        status = kwargs.get('status', '')
+        host = kwargs.get('host', '')
+        message = kwargs.get('message', '')
+
+        if status == 'success':
+            logger.debug(f"心跳成功: {host}")
+        else:
+            logger.warning(f"心跳失败: {host}, {message}")
+            # 发送通知
+            self.send_notification(f"心跳失败: {host}, {message}", level="warning")
 
     def _watch_services(self) -> None:
-        """
-        监控服务状态
-        """
+        """监控服务状态的线程"""
         logger.info("服务状态监控线程已启动")
 
         while not self.stop_requested:
             try:
-                # 检查各服务状态
-                notifier_status = notifier_manager.get_status()
-                backup_status = backup_manager.get_status()
-                monitor_status = monitor_manager.get_status()
-                heartbeat_status = heartbeat_service.get_status()
+                # 检查各个服务状态
+                if not notifier_manager.is_running():
+                    logger.warning("通知服务已停止，尝试重启")
+                    notifier_manager.start()
 
-                # 检查是否有服务需要重启
-                if (self.services_started and
-                    (not notifier_status['running'] or
-                     not backup_status['running'] or
-                     not monitor_status['running'] or
-                     not heartbeat_status['running'])):
+                if not backup_manager.is_running():
+                    logger.warning("备份服务已停止，尝试重启")
+                    backup_manager.start()
 
-                    logger.warning("检测到服务异常，尝试重新启动")
+                if not monitor_manager.is_running():
+                    logger.warning("监控服务已停止，尝试重启")
+                    monitor_manager.start()
 
-                    if not notifier_status['running']:
-                        notifier_manager.start()
+                if not heartbeat_service.is_running():
+                    logger.warning("心跳服务已停止，尝试重启")
+                    heartbeat_service.start()
 
-                    if not backup_status['running']:
-                        backup_manager.start()
-
-                    if not monitor_status['running']:
-                        monitor_manager.start()
-
-                    if not heartbeat_status['running']:
-                        heartbeat_service.start()
-
-                # 每5秒检查一次
-                time.sleep(5)
+                # 每分钟检查一次
+                time.sleep(60)
 
             except Exception as e:
-                logger.error(f"服务状态监控异常: {str(e)}")
-                logger.error(traceback.format_exc())
-                time.sleep(10)  # 异常情况下，稍微延长检查间隔
+                logger.error(f"服务状态监控错误: {str(e)}")
+                time.sleep(120)  # 错误后延长检查间隔
+
+        logger.info("服务状态监控线程已停止")
+
+    def _cleanup_resources(self) -> None:
+        """清理资源"""
+        logger.info("开始清理服务管理器资源")
+
+        # 取消事件订阅
+        for event_type, handlers in self.event_handlers.items():
+            for handler in handlers:
+                event_bus.unsubscribe(event_type, handler)
+
+        self.event_handlers.clear()
+        logger.info("服务管理器资源清理完成")
 
 # 创建单例实例
 service_manager = ServiceManager()

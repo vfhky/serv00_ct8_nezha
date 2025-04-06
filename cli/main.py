@@ -6,12 +6,7 @@ from cli.parser import create_parser
 from cli.handler import CommandHandler
 
 def main() -> int:
-    """
-    CLI主入口
-
-    Returns:
-        int: 退出码，0表示成功，非0表示失败
-    """
+    """CLI主入口"""
     # 创建命令行参数解析器
     parser = create_parser()
 

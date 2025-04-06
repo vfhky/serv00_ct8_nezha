@@ -12,14 +12,9 @@ logger = get_logger()
 event_bus = get_event_bus()
 
 class HeartbeatService:
-    """
-    心跳服务，负责监控和保活
-    """
+    """心跳服务，负责监控和保活"""
 
     def __init__(self):
-        """
-        初始化心跳服务
-        """
         self.heartbeats = {}
         self.config = None
         self.running = False
@@ -28,15 +23,7 @@ class HeartbeatService:
         self._lock = threading.RLock()  # 添加线程锁
 
     def initialize(self, config: ConfigBase) -> bool:
-        """
-        初始化心跳服务
-
-        Args:
-            config: 配置对象
-
-        Returns:
-            bool: 初始化是否成功
-        """
+        """初始化心跳服务"""
         self.config = config
 
         # 创建心跳监控
@@ -49,9 +36,7 @@ class HeartbeatService:
         return True
 
     def _add_custom_heartbeats(self) -> None:
-        """
-        添加自定义心跳监控
-        """
+        """添加自定义心跳监控"""
         if not self.config:
             return
 
@@ -70,12 +55,7 @@ class HeartbeatService:
                     name, restart_cmd, check_interval)
 
     def start(self) -> bool:
-        """
-        启动心跳服务
-
-        Returns:
-            bool: 启动是否成功
-        """
+        """启动心跳服务"""
         if self.running:
             logger.warning("心跳服务已经在运行")
             return True
@@ -91,12 +71,7 @@ class HeartbeatService:
         return True
 
     def stop(self) -> bool:
-        """
-        停止心跳服务
-
-        Returns:
-            bool: 停止是否成功
-        """
+        """停止心跳服务"""
         if not self.running:
             logger.warning("心跳服务未在运行")
             return True
@@ -112,9 +87,7 @@ class HeartbeatService:
         return True
 
     def _run(self) -> None:
-        """
-        心跳服务运行循环
-        """
+        """心跳服务运行循环"""
         logger.info("心跳服务线程已启动")
 
         while not self.stop_requested:
@@ -146,36 +119,20 @@ class HeartbeatService:
                 time.sleep(30)  # 发生错误时，稍微延长检查间隔
 
     def add_heartbeat(self, name: str, heartbeat: HeartbeatBase) -> None:
-        """
-        添加心跳监控
-
-        Args:
-            name: 心跳监控名称
-            heartbeat: 心跳监控实例
-        """
+        """添加心跳监控"""
         with self._lock:
             self.heartbeats[name] = heartbeat
             logger.info(f"添加心跳监控: {name}")
 
     def remove_heartbeat(self, name: str) -> None:
-        """
-        移除心跳监控
-
-        Args:
-            name: 心跳监控名称
-        """
+        """移除心跳监控"""
         with self._lock:
             if name in self.heartbeats:
                 del self.heartbeats[name]
                 logger.info(f"移除心跳监控: {name}")
 
     def get_status(self) -> Dict[str, Any]:
-        """
-        获取心跳服务状态
-
-        Returns:
-            Dict[str, Any]: 心跳服务状态信息
-        """
+        """获取心跳服务状态"""
         with self._lock:
             result = {
                 'running': self.running,

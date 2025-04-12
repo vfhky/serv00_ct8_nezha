@@ -27,7 +27,7 @@ install_py_require() {
 }
 
 count_processes() {
-    pgrep -f "$1" | wc -l
+    pgrep -f "$1" > /dev/null
 }
 
 # 设置环境变量

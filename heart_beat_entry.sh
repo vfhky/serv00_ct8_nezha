@@ -40,10 +40,12 @@ export HEART_BEAT_EXTRA_INFO="$1"
 # 主逻辑脚本文件
 heart_beat_logic_file="${serv00_ct8_dir}/heart_beat_logic.py"
 
-process_count=$(count_processes "heart_beat_")
-if [ "$process_count" -gt 1 ]; then
-    exit 0
-fi
+processes=("heart_beat_")
+for process in "${processes[@]}"; do
+    if check_process_running "$process"; then
+        exit 0
+    fi
+done
 
 install_py_require "${serv00_ct8_dir}"
 

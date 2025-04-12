@@ -262,7 +262,7 @@ download_dashboard() {
 
 
     # test
-    \cp -f ~/test/dashboard-linux-amd64 ${NZ_DASHBOARD_PATH}/nezha-dashboard
+    \cp -f ~/test/dashboard-linux-amd64 ${install_path}/nezha-dashboard
 }
 
 
@@ -306,7 +306,7 @@ download_agent() {
     generate_agent_script "$install_path"
 
     # test
-    \cp -f ~/test/nezha-agent ${NZ_AGENT_PATH}/nezha-agent
+    \cp -f ~/test/nezha-agent ${install_path}/nezha-agent
 }
 
 generate_agent_config() {

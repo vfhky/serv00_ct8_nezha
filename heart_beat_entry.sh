@@ -42,7 +42,8 @@ heart_beat_logic_file="${serv00_ct8_dir}/heart_beat_logic.py"
 
 process_count=$(count_processes "heart_beat_")
 if [ "$process_count" -gt 1 ]; then
-    exit 0
+    #exit 0
+    echo "heart_beat_logic.py 已经在运行"
 fi
 
 install_py_require "${serv00_ct8_dir}"

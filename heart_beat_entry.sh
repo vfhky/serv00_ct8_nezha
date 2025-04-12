@@ -26,7 +26,7 @@ install_py_require() {
     fi
 }
 
-count_processes() {
+check_process_running() {
     pgrep -f "$1" > /dev/null
 }
 
